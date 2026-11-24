@@ -1,0 +1,798 @@
+{
+  "topic": "css-html-a11y",
+  "questions": [
+    {
+      "id": "css-html-a11y-001",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "box-model",
+        "box-sizing"
+      ],
+      "prompt": "Что такое box model? Какой будет ширина элементов .a и .b?",
+      "code": {
+        "lang": "css",
+        "source": ".a, .b {\n  width: 200px;\n  padding: 20px;\n  border: 5px solid;\n}\n.b {\n  box-sizing: border-box;\n}\n\n/* offsetWidth у .a и .b = ? */"
+      },
+      "answer": "Ответ: `250 200`.\n\nКаждый элемент — прямоугольник из четырёх слоёв: **content → padding → border → margin**.\n\n- `box-sizing: content-box` (по умолчанию) — `width` задаёт только **содержимое**. Итоговая ширина = 200 + 2×20 (padding) + 2×5 (border) = **250px**.\n- `box-sizing: border-box` — `width` включает padding и border: элемент занимает ровно **200px**, а под содержимое остаётся 150px.\n\nПоэтому почти во всех проектах (и в Tailwind) задают `*, *::before, *::after { box-sizing: border-box; }` — размеры становятся предсказуемыми.\n\nMargin в ширину элемента не входит. Вертикальные margin соседних блоков **схлопываются** (margin collapsing): между блоками с `margin-bottom: 20px` и `margin-top: 30px` будет 30px, а не 50px. Во flex- и grid-контейнерах схлопывания нет.",
+      "keyPoints": [
+        "Слои: content, padding, border, margin",
+        "content-box: width — только содержимое, padding и border добавляются",
+        "border-box: width включает padding и border",
+        "Вертикальные margin соседних блоков схлопываются (кроме flex и grid)"
+      ],
+      "explanation": "Глобальный `box-sizing: border-box` — первое, что стоит назвать, когда спрашивают про box model на практике.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "250 200",
+        "distractors": [
+          "200 200",
+          "250 250",
+          "240 200"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Box_model"
+      ]
+    },
+    {
+      "id": "css-html-a11y-002",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "specificity",
+        "cascade"
+      ],
+      "prompt": "Как работает специфичность селекторов? Каким цветом будет ссылка?",
+      "code": {
+        "lang": "css",
+        "source": "<nav id=\"nav\" class=\"menu\">\n  <a class=\"link\">Ссылка</a>\n</nav>\n\n#nav a       { color: red; }\n.menu .link  { color: green; }\na.link       { color: blue; }"
+      },
+      "answer": "Ответ: **красным** — побеждает `#nav a`.\n\nСпецифичность сравнивается как тройка **(id, классы, элементы)**, слева направо:\n- `#nav a` → (1, 0, 1)\n- `.menu .link` → (0, 2, 0)\n- `a.link` → (0, 1, 1)\n\nОдин id сильнее любого числа классов. Классы, атрибуты и псевдоклассы (`:hover`) считаются во второй разряд, элементы и псевдоэлементы — в третий. `*` и комбинаторы специфичности не добавляют; `:where()` даёт нулевую специфичность, а `:is()` и `:not()` берут специфичность самого сильного аргумента.\n\nПорядок «кто победит» в каскаде: важность (`!important`) → **слой** (`@layer`) → специфичность → порядок в коде (последнее правило побеждает при равной специфичности). Инлайн-стиль `style=\"...\"` сильнее любого селектора, кроме `!important`.\n\nНа практике избегают id в стилях и `!important`, держат специфичность низкой и одинаковой (BEM, CSS Modules, Tailwind).",
+      "keyPoints": [
+        "Специфичность — тройка (id, классы, элементы), сравнение слева направо",
+        "Один id сильнее любого числа классов",
+        ":where() даёт ноль, :is() и :not() — по самому сильному аргументу",
+        "Каскад: !important → слой → специфичность → порядок; инлайн сильнее селекторов"
+      ],
+      "explanation": "«Специфичностные войны» — частая причина хрупкого CSS. Хороший ответ заканчивается тем, как вы их избегаете в проекте.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "red",
+        "distractors": [
+          "green",
+          "blue",
+          "Цвет по умолчанию браузера"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Cascade/Specificity"
+      ]
+    },
+    {
+      "id": "css-html-a11y-003",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "display",
+        "visibility"
+      ],
+      "prompt": "Чем отличаются display: block, inline, inline-block и none? Чем display: none отличается от visibility: hidden и opacity: 0?",
+      "answer": "- **block** — занимает всю ширину, начинается с новой строки, учитывает `width`, `height`, вертикальные margin (`div`, `p`, `section`).\n- **inline** — в потоке текста, ширина по содержимому, **игнорирует** `width`, `height` и вертикальные margin (`span`, `a`, `strong`).\n- **inline-block** — в строке, как inline, но с размерами и отступами, как block.\n- `flex`, `grid` — делают элемент контейнером раскладки.\n\nСкрытие:\n- `display: none` — элемента **нет в раскладке**, место не занимает, скрыт от скринридеров, события не получает;\n- `visibility: hidden` — **место занимает**, но не виден, скрыт от скринридеров и кликов;\n- `opacity: 0` — место занимает, **кликабелен** и доступен скринридерам — частый источник багов с «невидимыми» кнопками.\n\nЧтобы скрыть визуально, но оставить для скринридеров, используют класс `sr-only` (visually hidden).",
+      "keyPoints": [
+        "block — вся ширина, новая строка, учитывает размеры",
+        "inline — по содержимому, игнорирует width, height и вертикальные margin",
+        "display: none убирает из раскладки, visibility: hidden сохраняет место",
+        "opacity: 0 — элемент кликабелен и доступен скринридеру; sr-only — скрыть только визуально"
+      ],
+      "explanation": "Классический баг: модалку скрыли через `opacity: 0`, и она перехватывает клики по странице.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Элемент с visibility: hidden продолжает занимать место на странице",
+          "isTrue": true
+        },
+        {
+          "text": "Элемент с opacity: 0 нельзя кликнуть",
+          "isTrue": false
+        },
+        {
+          "text": "Для inline-элемента span свойство width не работает",
+          "isTrue": true
+        },
+        {
+          "text": "display: none скрывает элемент визуально, но скринридер его прочитает",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/display"
+      ]
+    },
+    {
+      "id": "css-html-a11y-004",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "position"
+      ],
+      "prompt": "Какие значения position бывают и как работает каждое?",
+      "answer": "- **static** (по умолчанию) — обычный поток; `top`, `left`, `z-index` не действуют.\n- **relative** — остаётся в потоке, сдвигается относительно **своего** места; часто используется как точка отсчёта для дочерних absolute-элементов.\n- **absolute** — **убирается из потока**, позиционируется относительно ближайшего **позиционированного** предка (не static), иначе — относительно начального блока страницы.\n- **fixed** — относительно **окна просмотра**, не прокручивается вместе со страницей. Ловушка: если у предка есть `transform`, `filter` или `perspective`, fixed позиционируется относительно этого предка.\n- **sticky** — ведёт себя как relative, пока при прокрутке не достигнет порога (`top: 0`), затем «прилипает» в пределах своего родителя. Не работает, если у предка `overflow: hidden` или `auto` без высоты прокрутки, и если не задан порог `top`/`bottom`.",
+      "keyPoints": [
+        "static — обычный поток, top и z-index не действуют",
+        "relative — сдвиг от своего места, точка отсчёта для absolute",
+        "absolute — вне потока, от ближайшего позиционированного предка",
+        "fixed — от окна (ломается transform у предка); sticky — прилипает в пределах родителя"
+      ],
+      "explanation": "«Почему не работает sticky?» — частый практический вопрос: проверяют `top`, `overflow` у предков и высоту родителя.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "absolute позиционируется относительно ближайшего предка с position, отличным от static",
+          "sticky не работает без порога, например top: 0",
+          "transform у предка может сломать position: fixed"
+        ],
+        "distractors": [
+          "relative убирает элемент из потока документа",
+          "z-index работает у элемента с position: static",
+          "fixed всегда позиционируется относительно родителя"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/position"
+      ]
+    },
+    {
+      "id": "css-html-a11y-005",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "units",
+        "responsive"
+      ],
+      "prompt": "Чем отличаются единицы px, em, rem, %, vh/vw и dvh? Что такое clamp()?",
+      "answer": "- **px** — фиксированные пиксели (CSS-пиксели, а не физические).\n- **em** — относительно размера шрифта **текущего элемента** (для `font-size` — родителя). Вложенные `em` перемножаются — легко получить неожиданные размеры.\n- **rem** — относительно размера шрифта **корня** (`html`, обычно 16px). Предсказуемо и учитывает настройки шрифта пользователя — основная единица для типографики и отступов.\n- **%** — от размера родителя (для `width` — от ширины, для `padding` и `margin` — тоже от ширины родителя).\n- **vw/vh** — 1% ширины/высоты окна. На мобильных `100vh` не учитывает выезжающую адресную строку — для этого есть **`dvh`** (динамическая), `svh` и `lvh`.\n- **`clamp(min, preferred, max)`** — значение в пределах: `font-size: clamp(1rem, 2.5vw, 2rem)` — плавная типографика без медиазапросов.\n\nДля доступности размеры шрифтов лучше задавать в `rem`: если пользователь увеличил шрифт в браузере, интерфейс масштабируется.",
+      "keyPoints": [
+        "rem — от шрифта корня, предсказуемо и учитывает настройки пользователя",
+        "em — от шрифта текущего элемента, вложенные em перемножаются",
+        "vh на мобильных не учитывает адресную строку — dvh",
+        "clamp(min, preferred, max) — плавные размеры без медиазапросов"
+      ],
+      "explanation": "Шрифт в `px` не уважает выбранный пользователем размер шрифта в настройках браузера — это аргумент за `rem` с точки зрения доступности.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "rem — относительно размера шрифта корневого элемента html"
+        ],
+        "distractors": [
+          "rem — относительно размера шрифта родителя",
+          "100vh на мобильных всегда точно равно видимой высоте экрана",
+          "em и rem — одно и то же"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Values_and_units"
+      ]
+    },
+    {
+      "id": "css-html-a11y-006",
+      "level": 2,
+      "difficulty": "junior",
+      "tags": [
+        "flexbox",
+        "grid",
+        "layout"
+      ],
+      "prompt": "Когда использовать Flexbox, а когда Grid?",
+      "answer": "- **Flexbox** — раскладка в **одном измерении**: строка или колонка. Размеры определяет **содержимое**, элементы растягиваются и сжимаются. Подходит для компонентов: панель кнопок, навигация, карточка с иконкой и текстом, выравнивание по центру.\n- **Grid** — раскладка в **двух измерениях**: строки и колонки одновременно. Размеры определяет **сетка**, а элементы встраиваются в неё. Подходит для структуры страницы (шапка, сайдбар, контент), галерей карточек, форм с выровненными колонками, дашбордов.\n\nПолезные приёмы Grid: `grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))` — адаптивная сетка карточек без медиазапросов; `grid-template-areas` — наглядные области страницы; **subgrid** — дочерние элементы выравниваются по сетке родителя.\n\nОни не конкурируют, а дополняют друг друга: Grid для каркаса страницы, Flexbox внутри компонентов. В обоих есть `gap` для отступов между элементами.",
+      "keyPoints": [
+        "Flexbox — одно измерение, размеры от содержимого",
+        "Grid — два измерения, размеры от сетки",
+        "Flexbox — компоненты, Grid — каркас страницы и сетки карточек",
+        "repeat(auto-fill, minmax()) — адаптивная сетка без медиазапросов"
+      ],
+      "explanation": "Хороший ответ не «Grid лучше», а критерий выбора: «Важен поток содержимого — Flexbox, важно размещение по строкам и колонкам — Grid».",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Сетка карточек товаров с выровненными строками и колонками — Grid, кнопки в панели инструментов — Flexbox"
+        ],
+        "distractors": [
+          "Flexbox устарел, всегда нужно использовать Grid",
+          "Grid подходит только для таблиц с данными",
+          "Flexbox управляет строками и колонками одновременно"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Grid_layout/Relationship_with_other_layout_methods"
+      ]
+    },
+    {
+      "id": "css-html-a11y-007",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "flexbox",
+        "min-width"
+      ],
+      "prompt": "Почему flex-элемент с длинным текстом вылезает за контейнер? Какой будет ширина элементов?",
+      "code": {
+        "lang": "html",
+        "source": "<style>\n  .row { display: flex; width: 300px; }\n  .row > div { flex: 1; }\n</style>\n\n<div class=\"row\">\n  <div id=\"a\">short</div>\n  <div id=\"b\">verylongwordwithoutanyspacesthatcannotwrapatall</div>\n</div>\n\n<!-- offsetWidth у #a и #b = ? -->"
+      },
+      "answer": "Ответ: `32 330` — второй элемент шире контейнера (300px) и вылезает за него.\n\n`flex: 1` — это `flex-grow: 1; flex-shrink: 1; flex-basis: 0%`. Элементы должны делить место поровну, но у flex-элементов по умолчанию **`min-width: auto`**: элемент не может стать уже своего минимального содержимого. Длинное слово без пробелов нельзя перенести, поэтому элемент растягивается.\n\nИсправление — `min-width: 0` (или `overflow: hidden`) у flex-элемента: тогда оба получат по 150px, а текст можно обрезать через `text-overflow: ellipsis` или переносить через `overflow-wrap: anywhere`.\n\nТа же проблема в Grid: колонка `1fr` означает `minmax(auto, 1fr)`, и длинное содержимое её растягивает. Решение — `minmax(0, 1fr)`.",
+      "keyPoints": [
+        "flex: 1 — grow 1, shrink 1, basis 0%",
+        "У flex-элементов по умолчанию min-width: auto — не уже содержимого",
+        "Исправление — min-width: 0 или overflow: hidden",
+        "В Grid то же: 1fr = minmax(auto, 1fr), решение — minmax(0, 1fr)"
+      ],
+      "explanation": "Это один из самых частых реальных багов в таблицах и карточках с длинными названиями, email-адресами или ссылками.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "32 330",
+        "distractors": [
+          "150 150",
+          "100 200",
+          "0 300"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/min-width"
+      ]
+    },
+    {
+      "id": "css-html-a11y-008",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "z-index",
+        "stacking-context"
+      ],
+      "prompt": "Как работает z-index и что такое stacking context? Какой элемент будет сверху?",
+      "code": {
+        "lang": "css",
+        "source": "/* все div: position: absolute; top: 0; left: 0; 100×100 */\n.parent  { z-index: 1; }\n.child   { z-index: 9999; background: red; }  /* внутри .parent */\n.sibling { z-index: 2; background: blue; }    /* сосед .parent */\n\n/* Какой элемент виден сверху? */"
+      },
+      "answer": "Сверху будет **.sibling** (синий), хотя у красного `.child` z-index 9999.\n\n**Stacking context** — отдельный «слой», внутри которого элементы упорядочиваются по z-index **независимо от остальной страницы**. Сравниваются только элементы одного контекста. `.parent` с `z-index: 1` создаёт свой контекст, и всё внутри него, даже с z-index 9999, остаётся на уровне 1 относительно соседей. `.sibling` с `z-index: 2` выше.\n\nЧто создаёт stacking context:\n- позиционированный элемент с `z-index`, отличным от `auto`;\n- `opacity` меньше 1, `transform`, `filter`, `perspective`, `will-change` с этими свойствами;\n- `position: fixed` и `sticky`;\n- flex- и grid-элементы с `z-index`;\n- `isolation: isolate` — создаёт контекст явно.\n\nz-index работает только у позиционированных элементов и у flex/grid-элементов. Чтобы модалки и выпадающие списки не прятались, их рендерят в конце `body` через портал (`createPortal`) или используют `<dialog>` и Popover API — они попадают в специальный верхний слой (top layer).",
+      "keyPoints": [
+        "Stacking context — изолированный слой, z-index сравнивается только внутри него",
+        "Ребёнок не может подняться выше контекста родителя, даже с z-index 9999",
+        "Контекст создают: position + z-index, opacity < 1, transform, filter, fixed/sticky, isolation",
+        "Модалки — через портал в body или dialog/popover в top layer"
+      ],
+      "explanation": "«Почему моя модалка под шапкой, хотя z-index 9999?» — классический вопрос. Ответ почти всегда — родитель с transform или opacity создал свой stacking context.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": ".sibling",
+        "distractors": [
+          ".child",
+          ".parent",
+          "Зависит от порядка в HTML"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Positioned_layout/Stacking_context"
+      ]
+    },
+    {
+      "id": "css-html-a11y-009",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "responsive",
+        "media-queries",
+        "container-queries"
+      ],
+      "prompt": "Как делать адаптивную вёрстку? Чем медиазапросы отличаются от container queries?",
+      "answer": "Основа адаптивности — **гибкая раскладка**: Flexbox и Grid с `minmax()`, `auto-fill`, относительные единицы, `clamp()`, `max-width: 100%` для изображений. Часто она решает задачу без единого медиазапроса.\n\n**Mobile-first** — базовые стили пишут для маленьких экранов, а для больших добавляют `@media (min-width: 768px)`. Так проще и легче для мобильных устройств.\n\n**Медиазапросы** (`@media`) реагируют на **окно** браузера и настройки пользователя: `prefers-color-scheme`, `prefers-reduced-motion`, `hover`/`pointer` (сенсорный экран или мышь).\n\n**Container queries** (`@container`) реагируют на размер **контейнера**, в котором лежит компонент. Это важно для компонентных систем: карточка в узком сайдбаре и в широком контенте выглядит по-разному при одинаковой ширине окна. Контейнер объявляют через `container-type: inline-size`.\n\nТакже нужны: `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">`, адаптивные изображения (`srcset`, `sizes`), достаточный размер зон нажатия на сенсорных экранах.",
+      "keyPoints": [
+        "Основа — гибкая раскладка: flex, grid, minmax, clamp, относительные единицы",
+        "Mobile-first: базовые стили для маленьких экранов, min-width для больших",
+        "Медиазапросы — размер окна и настройки пользователя",
+        "Container queries — размер контейнера компонента"
+      ],
+      "explanation": "Container queries — сильный аргумент для дизайн-систем: компонент адаптируется к месту, где его используют, а не к ширине экрана.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Container query реагирует на размер контейнера компонента, а не окна браузера",
+          "isTrue": true
+        },
+        {
+          "text": "При подходе mobile-first медиазапросы обычно пишут через min-width",
+          "isTrue": true
+        },
+        {
+          "text": "Без meta viewport мобильный браузер корректно применит адаптивные стили",
+          "isTrue": false
+        },
+        {
+          "text": "Медиазапросом можно узнать, что пользователь предпочитает тёмную тему",
+          "isTrue": true
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Containment/Container_queries"
+      ]
+    },
+    {
+      "id": "css-html-a11y-010",
+      "level": 2,
+      "difficulty": "junior",
+      "tags": [
+        "centering",
+        "layout"
+      ],
+      "prompt": "Как отцентрировать элемент по горизонтали и вертикали?",
+      "answer": "Современные способы:\n- **Grid**: `display: grid; place-items: center;` у родителя — самый короткий вариант;\n- **Flexbox**: `display: flex; justify-content: center; align-items: center;`;\n- **absolute + transform**: `position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);` — для элемента поверх других, например модалки или бейджа;\n- **margin: auto** — внутри flex- или grid-контейнера центрирует по обеим осям; у обычного блока с заданной шириной — только по горизонтали (`margin: 0 auto`);\n- **текст** — `text-align: center`, а для одной строки — `line-height`, равный высоте.\n\nДля вертикального центрирования родителю нужна высота (например, `min-height: 100dvh` для полноэкранного блока) — частая причина, почему «центрирование не работает».",
+      "keyPoints": [
+        "Grid: place-items: center у родителя",
+        "Flexbox: justify-content и align-items: center",
+        "absolute + top/left 50% + transform: translate(-50%, -50%)",
+        "margin: auto во flex/grid; родителю нужна высота для вертикального центрирования"
+      ],
+      "explanation": "Простой вопрос, но хорошо назвать 2–3 способа и когда какой уместен — это показывает уверенное владение раскладкой.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "display: grid; place-items: center; у родителя",
+          "display: flex; justify-content: center; align-items: center; у родителя",
+          "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
+        ],
+        "distractors": [
+          "vertical-align: middle у блочного элемента",
+          "text-align: center центрирует блок по вертикали",
+          "margin: auto у обычного блока без flex центрирует по вертикали"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/How_to/Layout_cookbook/Center_an_element"
+      ]
+    },
+    {
+      "id": "css-html-a11y-011",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "pseudo-classes",
+        "has",
+        "selectors"
+      ],
+      "prompt": "Чем псевдоклассы отличаются от псевдоэлементов? Что умеет :has()?",
+      "answer": "- **Псевдоклассы** (`:`) — выбирают элемент **в определённом состоянии**: `:hover`, `:focus-visible`, `:checked`, `:disabled`, `:first-child`, `:nth-child(2n)`, `:not(.active)`, `:invalid`.\n- **Псевдоэлементы** (`::`) — создают или выбирают **часть** элемента, которой нет в DOM: `::before`, `::after` (нужно свойство `content`), `::placeholder`, `::selection`, `::first-line`, `::marker`.\n\n**`:has()`** — «родительский селектор»: выбирает элемент, **внутри которого** (или после которого) есть совпадение.\n- `.card:has(img)` — карточки с картинкой;\n- `form:has(:invalid) button[type=submit]` — стиль кнопки, если в форме есть ошибки;\n- `label:has(+ input:required)::after { content: ' *'; }` — звёздочка у обязательных полей.\n\nРаньше такое делали только через JavaScript. Также полезны `:is()` и `:where()` для группировки селекторов (у `:where()` нулевая специфичность — удобно для базовых стилей библиотек).",
+      "keyPoints": [
+        "Псевдоклассы — состояние элемента: :hover, :focus-visible, :checked, :nth-child",
+        "Псевдоэлементы — часть элемента вне DOM: ::before, ::after, ::placeholder",
+        ":has() выбирает элемент по его содержимому — «родительский селектор»",
+        ":is() и :where() группируют селекторы, у :where() нулевая специфичность"
+      ],
+      "explanation": "`::before` и `::after` без свойства `content` не отображаются — частая причина «почему псевдоэлемент не виден».",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          ".card:has(img) выбирает карточки, внутри которых есть изображение",
+          "::before — псевдоэлемент, ему нужно свойство content",
+          ":focus-visible — псевдокласс состояния фокуса"
+        ],
+        "distractors": [
+          "::hover — псевдоэлемент наведения",
+          ":has() выбирает только дочерние элементы, но не родителя",
+          "Псевдоэлементы ::before добавляются в DOM как обычные узлы"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/:has"
+      ]
+    },
+    {
+      "id": "css-html-a11y-012",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "css-variables",
+        "theming"
+      ],
+      "prompt": "Как работают CSS-переменные (custom properties)? Чем они лучше переменных препроцессоров?",
+      "answer": "CSS-переменная объявляется через `--name` и читается через `var()`:\n\n```css\n:root { --color-primary: #58cc02; --radius: 12px; }\n.button { background: var(--color-primary); border-radius: var(--radius, 8px); }\n```\n\nОтличия от переменных Sass и Less:\n- **живут в браузере**, а не заменяются при сборке: значение можно **изменить в рантайме** — через JavaScript (`el.style.setProperty('--x', ...)`) или медиазапрос;\n- **наследуются и каскадируются**: переопределил переменную в `.dark` или внутри компонента — изменилось всё, что её использует;\n- значение по умолчанию: `var(--x, 8px)`;\n- `@property` позволяет задать тип и анимировать переменную.\n\nПрименение: **темы** (светлая и тёмная — переопределение переменных в `[data-theme=dark]`), дизайн-токены, настройка компонентов снаружи, динамические значения из JS (позиция курсора, прогресс).\n\nПеременные препроцессоров всё ещё удобны для вычислений на этапе сборки, но в современных проектах их в основном заменили CSS-переменные.",
+      "keyPoints": [
+        "Объявление --name, чтение var(--name, запасное значение)",
+        "Работают в браузере: можно менять в рантайме из JS и медиазапросов",
+        "Наследуются и каскадируются — переопределение в подветке дерева",
+        "Темы и дизайн-токены; переменные Sass заменяются при сборке"
+      ],
+      "explanation": "Тёмная тема на CSS-переменных — хороший практический пример для ответа: меняются только значения токенов, компоненты не трогаются.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Значение CSS-переменной можно изменить из JavaScript во время работы страницы",
+          "isTrue": true
+        },
+        {
+          "text": "Переменные Sass доступны в браузере во время работы страницы",
+          "isTrue": false
+        },
+        {
+          "text": "CSS-переменная, объявленная в .dark, переопределяет значение для всех потомков .dark",
+          "isTrue": true
+        },
+        {
+          "text": "В var() нельзя указать значение по умолчанию",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Cascading_variables/Using_custom_properties"
+      ]
+    },
+    {
+      "id": "css-html-a11y-013",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "css-architecture",
+        "tailwind",
+        "css-modules"
+      ],
+      "prompt": "Какие подходы к организации стилей вы знаете? Что выбрать для React и Next.js?",
+      "answer": "- **БЭМ** и другие методологии — соглашение об именах (`block__element--modifier`) против конфликтов в глобальном CSS. Работает везде, но держится на дисциплине.\n- **CSS Modules** — классы автоматически становятся уникальными для файла (`Button.module.css`). Обычный CSS, нет конфликтов, нет рантайма.\n- **Utility-first (Tailwind CSS)** — стили собираются из готовых классов прямо в разметке. Быстрая разработка, единые токены (отступы, цвета), неиспользуемые классы не попадают в сборку. Минусы — длинные строки классов, нужен навык; повторяющиеся сочетания выносят в компоненты.\n- **CSS-in-JS с рантаймом** (styled-components, Emotion) — стили в JavaScript, динамика через пропсы. Минусы: стоимость в рантайме и **плохая совместимость с React Server Components** — сами авторы рекомендуют для новых проектов подходы без рантайма.\n- **CSS-in-JS без рантайма** (vanilla-extract, Panda CSS) — пишется в TS, а на выходе статический CSS.\n\nДля Next.js с Server Components обычно выбирают Tailwind или CSS Modules. Главное — один подход в проекте и дизайн-токены как единый источник значений.",
+      "keyPoints": [
+        "БЭМ — соглашение об именах против конфликтов",
+        "CSS Modules — локальные классы без рантайма",
+        "Tailwind — utility-классы, единые токены, маленький итоговый CSS",
+        "CSS-in-JS с рантаймом плохо сочетается с Server Components"
+      ],
+      "explanation": "Сильный ответ называет критерий выбора: совместимость с Server Components, производительность, привычки команды и дизайн-токены.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Для Next.js с Server Components — Tailwind CSS или CSS Modules, без CSS-in-JS с рантаймом"
+        ],
+        "distractors": [
+          "styled-components — лучший выбор для Server Components, потому что работает в рантайме",
+          "Глобальный CSS без соглашений об именах — лучший вариант для большой команды",
+          "Tailwind добавляет в сборку все классы, даже неиспользуемые"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/css"
+      ]
+    },
+    {
+      "id": "css-html-a11y-014",
+      "level": 3,
+      "difficulty": "senior",
+      "tags": [
+        "cascade-layers",
+        "important"
+      ],
+      "prompt": "Что такое каскадные слои @layer? Каким цветом будет кнопка?",
+      "code": {
+        "lang": "html",
+        "source": "<style>\n  @layer base, components;\n\n  @layer components {\n    .btn { color: blue; }\n  }\n  @layer base {\n    #x.btn { color: red; }\n  }\n</style>\n\n<button id=\"x\" class=\"btn\">Кнопка</button>"
+      },
+      "answer": "Ответ: **синим** — побеждает правило из слоя `components`, хотя селектор `#x.btn` в слое `base` специфичнее.\n\n`@layer` добавляет в каскад уровень **выше специфичности**: правила из слоя, объявленного **позже**, побеждают правила из более ранних слоёв **независимо от специфичности**. Порядок задают заранее: `@layer reset, base, components, utilities;`.\n\nДругие правила:\n- стили **вне слоёв** побеждают любые слоистые стили;\n- для `!important` порядок слоёв **переворачивается**: важное правило из раннего слоя сильнее важного из позднего.\n\nЗачем: управлять приоритетом стилей библиотек, сбросов и утилит **без войны специфичности** и `!important`. Например, CSS UI-библиотеки кладут в ранний слой — и ваши простые классы его переопределяют. На слоях построен Tailwind CSS v4.\n\nОб `!important`: это крайняя мера. Он ломает предсказуемость каскада; оправдан в утилитах вроде `.sr-only` и при переопределении стилей сторонних виджетов.",
+      "keyPoints": [
+        "Слой, объявленный позже, побеждает ранний независимо от специфичности",
+        "Стили вне слоёв сильнее любых слоистых",
+        "Для !important порядок слоёв переворачивается",
+        "Слои управляют приоритетом библиотек и утилит без войны специфичности"
+      ],
+      "explanation": "Хороший практический пример: стили UI-библиотеки в `@layer vendor` — и любой ваш класс их переопределяет без `!important`.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "blue",
+        "distractors": [
+          "red",
+          "Цвет по умолчанию браузера",
+          "Зависит от порядка блоков @layer в коде"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@layer"
+      ]
+    },
+    {
+      "id": "css-html-a11y-015",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "animations",
+        "performance",
+        "reduced-motion"
+      ],
+      "prompt": "Как делать производительные и доступные анимации в CSS?",
+      "code": {
+        "lang": "css",
+        "source": "@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;\n    transition-duration: 0.01ms !important;\n  }\n}"
+      },
+      "answer": "**Производительность:**\n- анимировать **`transform` и `opacity`** — они обрабатываются на этапе композиции, без пересчёта layout и перерисовки; `top`, `left`, `width`, `height`, `margin` вызывают reflow на каждом кадре;\n- `will-change: transform` подсказывает браузеру заранее вынести элемент в отдельный слой — использовать точечно и снимать после анимации: каждый слой стоит памяти;\n- **transition** — для перехода между двумя состояниями (hover, открытие), **@keyframes animation** — для многошаговых и повторяющихся анимаций;\n- в JavaScript — `requestAnimationFrame`, Web Animations API или библиотека (Motion), а не `setInterval`;\n- проверять во вкладке Performance: цель — стабильные 60 кадров в секунду.\n\n**Доступность:**\n- уважать **`prefers-reduced-motion`**: отключать или упрощать движение для пользователей, у которых анимации вызывают дискомфорт;\n- не делать мигание чаще 3 раз в секунду;\n- анимация не должна быть единственным способом передать информацию; автоматическое движение дольше 5 секунд должно быть можно поставить на паузу.",
+      "keyPoints": [
+        "Анимировать transform и opacity — без reflow и repaint",
+        "will-change точечно и временно",
+        "transition — два состояния, @keyframes — многошаговые анимации; в JS — rAF или WAAPI",
+        "prefers-reduced-motion, без частого мигания, возможность остановить движение"
+      ],
+      "explanation": "Это пересекается с вопросом о reflow: «почему translate лучше, чем top» — тот же механизм.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Отключает анимации для пользователей, которые включили в системе уменьшение движения"
+        ],
+        "distractors": [
+          "Ускоряет все анимации для слабых устройств",
+          "Отключает анимации на мобильных телефонах",
+          "Включает анимации только при наведении мыши"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion"
+      ]
+    },
+    {
+      "id": "css-html-a11y-016",
+      "level": 4,
+      "difficulty": "junior",
+      "tags": [
+        "semantic-html",
+        "a11y"
+      ],
+      "prompt": "Что такое семантическая вёрстка и зачем она нужна?",
+      "answer": "Семантическая вёрстка — использование HTML-элементов **по смыслу**, а не только ради внешнего вида: `<header>`, `<nav>`, `<main>`, `<article>`, `<section>`, `<aside>`, `<footer>`, `<button>`, `<a>`, `<h1>`–`<h6>`, `<ul>`, `<table>`, `<form>`, `<label>`.\n\nЗачем:\n- **доступность** — из семантики браузер строит дерево доступности: скринридер объявляет «кнопка», «навигация», «список из 5 элементов», а пользователь переходит по заголовкам и областям (landmarks);\n- **поведение из коробки** — `<button>` фокусируется с клавиатуры, нажимается Enter и пробелом, отправляет форму; `<div onClick>` ничего этого не умеет;\n- **SEO** — поисковики лучше понимают структуру и главное содержимое;\n- **читаемость кода** и поддержка.\n\nПравила: один `<main>` на странице, логичная иерархия заголовков без пропуска уровней, ссылка (`<a href>`) — для перехода, кнопка (`<button>`) — для действия, у таблиц данных — `<th>` и `<caption>`.",
+      "keyPoints": [
+        "Элементы по смыслу: header, nav, main, article, button, a, заголовки, списки",
+        "Браузер строит дерево доступности, скринридер объявляет роли и структуру",
+        "Нативное поведение: фокус, клавиатура, отправка форм",
+        "Ссылка — для перехода, кнопка — для действия; логичная иерархия заголовков"
+      ],
+      "explanation": "`<div onClick>` вместо `<button>` — самый частый пример плохой семантики: недоступно с клавиатуры, скринридер не знает, что это кнопка.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "<button> для действия «Удалить», <a href> для перехода на страницу заказа"
+        ],
+        "distractors": [
+          "<div onClick> для кнопок — так проще стилизовать, а доступность не страдает",
+          "<a href=\"#\" onClick> для любых действий",
+          "Заголовки выбирают по размеру шрифта, порядок h1–h6 не важен"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Glossary/Semantics"
+      ]
+    },
+    {
+      "id": "css-html-a11y-017",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "aria",
+        "a11y"
+      ],
+      "prompt": "Что такое ARIA и когда её использовать? В чём первое правило ARIA?",
+      "answer": "**ARIA** — атрибуты, которые описывают для вспомогательных технологий **роль, состояние и свойства** элемента, когда HTML этого не выражает:\n- роли: `role=\"dialog\"`, `role=\"tablist\"`, `role=\"alert\"`;\n- состояния: `aria-expanded`, `aria-selected`, `aria-checked`, `aria-disabled`;\n- имена и описания: `aria-label`, `aria-labelledby`, `aria-describedby`;\n- живые области: `aria-live=\"polite\"` — скринридер объявит изменение (уведомление, результат поиска);\n- `aria-hidden=\"true\"` — скрыть декоративное от скринридера.\n\n**Первое правило ARIA:** если есть нативный HTML-элемент с нужной семантикой и поведением — используйте его, а не ARIA. В руководстве WAI-ARIA прямо сказано: *лучше без ARIA, чем с плохой ARIA* — страницы с ARIA в среднем содержат больше ошибок доступности.\n\nВажно: ARIA **меняет только то, что объявляет скринридер**, но не добавляет поведение. `role=\"button\"` на `div` не сделает его фокусируемым и не добавит обработку Enter — это нужно реализовать самому. Для сложных виджетов (combobox, меню, вкладки) следуют паттернам из ARIA Authoring Practices Guide.",
+      "keyPoints": [
+        "ARIA описывает роль, состояние и свойства для вспомогательных технологий",
+        "Первое правило: нативный HTML-элемент лучше ARIA",
+        "ARIA не добавляет поведение: фокус и клавиатуру нужно реализовать самому",
+        "aria-live для динамических объявлений; паттерны виджетов — по ARIA APG"
+      ],
+      "explanation": "`aria-label` на кнопке-иконке без текста — один из самых полезных и простых примеров правильной ARIA.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "role=\"button\" на div автоматически делает его доступным с клавиатуры",
+          "isTrue": false
+        },
+        {
+          "text": "Нативный <button> предпочтительнее div с role=\"button\"",
+          "isTrue": true
+        },
+        {
+          "text": "aria-live позволяет скринридеру объявить динамически изменившийся текст",
+          "isTrue": true
+        },
+        {
+          "text": "Чем больше ARIA-атрибутов на странице, тем она доступнее",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://www.w3.org/WAI/ARIA/apg/practices/read-me-first/"
+      ]
+    },
+    {
+      "id": "css-html-a11y-018",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "keyboard",
+        "focus",
+        "dialog"
+      ],
+      "prompt": "Как обеспечить работу с клавиатуры и управление фокусом? Как сделать доступное модальное окно?",
+      "answer": "**Клавиатура:**\n- все интерактивные элементы доступны через **Tab** в логичном порядке (порядок DOM), активируются Enter или пробелом;\n- `tabindex=\"0\"` — добавить элемент в порядок табуляции, `tabindex=\"-1\"` — фокусировать программно, но не через Tab; **положительные значения tabindex не использовать** — они ломают порядок;\n- **видимый фокус**: не убирать `outline` без замены; `:focus-visible` показывает рамку при навигации с клавиатуры, но не при клике мышью;\n- ссылка «Перейти к содержимому» (skip link) в начале страницы.\n\n**Модальное окно:**\n- при открытии фокус переходит **внутрь** окна (на заголовок или первое поле);\n- фокус **не уходит** за пределы окна, пока оно открыто, а фон недоступен;\n- **Escape** закрывает окно;\n- при закрытии фокус **возвращается** на кнопку, которая его открыла;\n- у окна есть доступное имя (`aria-labelledby` на заголовок).\n\nНативный **`<dialog>`** с `showModal()` делает большую часть этого сам: ловит фокус, закрывается по Escape, делает фон инертным и показывает окно в top layer поверх всего. Атрибут `inert` делает любую часть страницы недоступной для фокуса и скринридера.\n\nВ SPA при смене маршрута фокус и объявление новой страницы тоже нужно обрабатывать: переводить фокус на заголовок или в `<main>`.",
+      "keyPoints": [
+        "Tab в логичном порядке, tabindex 0 и -1, без положительных значений",
+        "Видимый фокус через :focus-visible, outline не убирать без замены",
+        "Модалка: фокус внутрь, не выходит наружу, Escape, возврат фокуса на кнопку",
+        "Нативный dialog со showModal() и атрибут inert делают это из коробки"
+      ],
+      "explanation": "Простая проверка доступности, которую можно назвать на собеседовании: пройти весь сценарий только с клавиатуры, не трогая мышь.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "После закрытия модалки вернуть фокус на кнопку, которая её открыла",
+          "Нативный <dialog> с showModal() закрывается по Escape и делает фон инертным",
+          "Использовать :focus-visible для видимой рамки фокуса при навигации с клавиатуры"
+        ],
+        "distractors": [
+          "Задать outline: none для всех элементов, чтобы рамка фокуса не мешала дизайну",
+          "Расставить tabindex=\"1\", \"2\", \"3\" для управления порядком",
+          "Пока открыта модалка, фокус может свободно уходить на элементы страницы под ней"
+        ]
+      },
+      "sources": [
+        "https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog"
+      ]
+    },
+    {
+      "id": "css-html-a11y-019",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "forms",
+        "a11y"
+      ],
+      "prompt": "Как сделать форму доступной?",
+      "answer": "- **У каждого поля — видимая подпись** `<label for=\"email\">`, связанная с `id` поля (или поле внутри `<label>`). Placeholder **не заменяет** label: он исчезает при вводе и часто имеет низкий контраст.\n- **Правильные типы и атрибуты**: `type=\"email\"`, `type=\"tel\"`, `inputmode`, `autocomplete=\"email\"` — нужная клавиатура на телефоне и автозаполнение.\n- **Группы** связанных полей (радиокнопки) — `<fieldset>` и `<legend>`.\n- **Обязательные поля** — `required`, а визуальная звёздочка поясняется в тексте.\n- **Ошибки**:\n  - текст ошибки рядом с полем и связан с ним через `aria-describedby`;\n  - `aria-invalid=\"true\"` у поля с ошибкой;\n  - ошибка не передаётся **только цветом** — нужен текст или иконка;\n  - при отправке — сводка ошибок или перевод фокуса на первое ошибочное поле;\n  - сообщения конкретные: не «Неверный ввод», а «Введите email в формате name@example.com».\n- **Кнопка отправки** — настоящий `<button type=\"submit\">`; форма отправляется по Enter.\n- Не ограничивать время заполнения без возможности продлить.",
+      "keyPoints": [
+        "Видимый label, связанный с полем; placeholder не заменяет label",
+        "Правильные type, inputmode и autocomplete",
+        "fieldset и legend для групп полей",
+        "Ошибки: текст рядом с полем, aria-describedby, aria-invalid, не только цветом, фокус на первую ошибку"
+      ],
+      "explanation": "Это напрямую пересекается с вопросом о формах в React: хорошая форма одновременно валидирует данные и понятно сообщает об ошибках всем пользователям.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Связать текст ошибки с полем через aria-describedby",
+          "Использовать <label for> для каждого поля",
+          "Указать autocomplete=\"email\" у поля email"
+        ],
+        "distractors": [
+          "Placeholder достаточно вместо label",
+          "Обозначать ошибку только красной рамкой поля",
+          "Кнопку отправки делать через div с onClick"
+        ]
+      },
+      "sources": [
+        "https://www.w3.org/WAI/tutorials/forms/"
+      ]
+    },
+    {
+      "id": "css-html-a11y-020",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "wcag",
+        "a11y-testing",
+        "contrast",
+        "alt"
+      ],
+      "prompt": "Что такое WCAG? Как проверить доступность интерфейса?",
+      "answer": "**WCAG** (Web Content Accessibility Guidelines) — международный стандарт доступности. Текущая версия — **2.2**; обычно ориентируются на уровень **AA**. Многие законы требуют соответствия, в том числе Европейский акт о доступности (EAA), который применяется с июня 2025 года.\n\nЧетыре принципа **POUR**:\n- **Perceivable (воспринимаемость)** — альтернативный текст изображений, субтитры, достаточный **контраст**: 4,5:1 для обычного текста, 3:1 для крупного и для элементов интерфейса;\n- **Operable (управляемость)** — работа с клавиатуры, видимый фокус, достаточно времени, без провоцирующих приступы вспышек;\n- **Understandable (понятность)** — понятный язык, предсказуемое поведение, помощь при ошибках, атрибут `lang`;\n- **Robust (надёжность)** — корректный код, совместимый со вспомогательными технологиями.\n\n**Alt-текст**: описывает смысл изображения в контексте; декоративные изображения — `alt=\"\"` (пустой, но не отсутствующий атрибут).\n\n**Как проверять:**\n- автоматически — axe DevTools, Lighthouse, `eslint-plugin-jsx-a11y`, axe в тестах (Playwright, jest-axe). Автоматика находит лишь часть проблем;\n- **вручную** — пройти сценарии только с клавиатуры, проверить скринридером (VoiceOver, NVDA), масштаб 200% и 400%, контраст;\n- лучше всего — тестирование с реальными пользователями вспомогательных технологий.",
+      "keyPoints": [
+        "WCAG 2.2, ориентир — уровень AA; законы вроде European Accessibility Act",
+        "POUR: воспринимаемость, управляемость, понятность, надёжность",
+        "Контраст 4,5:1 для текста; alt по смыслу, декоративным — alt=\"\"",
+        "Автоматические инструменты находят лишь часть проблем — нужна ручная проверка клавиатурой и скринридером"
+      ],
+      "explanation": "Фраза «Lighthouse показал 100 по доступности, значит всё доступно» — ловушка: автоматика не проверит, понятен ли alt-текст и логичен ли порядок фокуса.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Минимальный контраст обычного текста по WCAG уровня AA — 4,5:1",
+          "isTrue": true
+        },
+        {
+          "text": "Для декоративного изображения нужно указать пустой alt=\"\"",
+          "isTrue": true
+        },
+        {
+          "text": "Автоматические инструменты вроде Lighthouse находят все проблемы доступности",
+          "isTrue": false
+        },
+        {
+          "text": "WCAG описывает только требования для людей с нарушениями зрения",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://www.w3.org/WAI/standards-guidelines/wcag/",
+        "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1344 @@
+{
+  "topic": "js-core",
+  "questions": [
+    {
+      "id": "js-core-001",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "closures",
+        "scope"
+      ],
+      "prompt": "Что такое замыкание (closure) в JavaScript?",
+      "answer": "Замыкание — это функция вместе с лексическим окружением, в котором она была создана. Благодаря этому функция имеет доступ к переменным внешней функции даже после того, как внешняя функция завершила выполнение.\n\n```js\nfunction counter() {\n  let count = 0;\n  return () => ++count;\n}\nconst next = counter();\nnext(); // 1\nnext(); // 2\n```\n\nПрименение: приватные переменные, фабрики функций, мемоизация, обработчики событий, каррирование.",
+      "keyPoints": [
+        "Функция + лексическое окружение, в котором она создана",
+        "Доступ к переменным внешней функции после её завершения",
+        "Пример применения: приватные данные, фабрики, мемоизация или колбэки"
+      ],
+      "explanation": "Каждая функция в JS запоминает ссылку на окружение (scope), где она была объявлена, а не где вызвана. Пока на внутреннюю функцию есть ссылка, её окружение не удаляется сборщиком мусора — поэтому `count` в примере «живёт» между вызовами.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Функция, которая сохраняет доступ к переменным из области видимости, где она была создана"
+        ],
+        "distractors": [
+          "Функция, которая вызывается сразу после объявления (IIFE)",
+          "Способ закрыть объект от изменений через Object.freeze",
+          "Функция, которая получает доступ к переменным из места, где её вызвали"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures"
+      ]
+    },
+    {
+      "id": "js-core-002",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "event-loop",
+        "promises"
+      ],
+      "prompt": "Что выведет этот код и почему?",
+      "code": {
+        "lang": "js",
+        "source": "console.log(1);\nsetTimeout(() => console.log(2), 0);\nPromise.resolve().then(() => console.log(3));\nconsole.log(4);"
+      },
+      "answer": "Вывод: `1 4 3 2`.\n\nСначала выполняется весь синхронный код (`1`, `4`). Затем, когда стек вызовов пуст, выполняются все микрозадачи — колбэк `.then` (`3`). Только после этого event loop берёт макрозадачу — колбэк `setTimeout` (`2`), даже при задержке 0.",
+      "keyPoints": [
+        "Синхронный код выполняется первым: 1 и 4",
+        "Promise.then — микрозадача, выполняется сразу после опустошения стека",
+        "setTimeout — макрозадача, выполняется после всех микрозадач, даже с задержкой 0"
+      ],
+      "explanation": "Частая ошибка — думать, что `setTimeout(fn, 0)` выполнится «сразу». Очередь микрозадач (промисы, queueMicrotask) всегда опустошается полностью перед следующей макрозадачей (таймеры, события, I/O).",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "1 4 3 2",
+        "distractors": [
+          "1 2 3 4",
+          "1 4 2 3",
+          "1 3 4 2"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop"
+      ]
+    },
+    {
+      "id": "js-core-003",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "event-loop"
+      ],
+      "prompt": "Расставьте шаги одного «оборота» event loop в браузере в правильном порядке.",
+      "answer": "1. Выполняется синхронный код, пока стек вызовов не опустеет.\n2. Выполняются ВСЕ микрозадачи (Promise.then, queueMicrotask, MutationObserver), включая добавленные по ходу.\n3. Браузер может отрисовать кадр (requestAnimationFrame, style, layout, paint).\n4. Берётся ОДНА макрозадача (setTimeout, событие, сообщение) — и цикл повторяется.",
+      "keyPoints": [
+        "Сначала синхронный код до пустого стека",
+        "Затем очередь микрозадач опустошается полностью",
+        "Между задачами браузер может выполнить рендеринг",
+        "Из очереди макрозадач берётся одна задача за оборот"
+      ],
+      "explanation": "Ключевая разница: микрозадачи выполняются все сразу, а макрозадачи — по одной за оборот. Поэтому бесконечная цепочка микрозадач может «заморозить» страницу, а цепочка setTimeout — нет.",
+      "formats": [
+        "ordering",
+        "open_text",
+        "open_voice"
+      ],
+      "ordering": [
+        "Выполняется синхронный код, пока стек вызовов не опустеет",
+        "Выполняются все микрозадачи (Promise.then, queueMicrotask)",
+        "Браузер может отрисовать кадр (rAF, layout, paint)",
+        "Из очереди берётся одна макрозадача (например, колбэк setTimeout)"
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide/In_depth"
+      ]
+    },
+    {
+      "id": "js-core-004",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "this",
+        "functions"
+      ],
+      "prompt": "Чем отличается `this` в стрелочной функции от `this` в обычной функции?",
+      "answer": "У обычной функции `this` определяется в момент вызова: метод объекта — объект, `call/apply/bind` — переданное значение, `new` — новый объект, просто вызов — `undefined` в strict mode.\n\nУ стрелочной функции своего `this` нет: она берёт `this` из внешней области видимости, где была создана (лексически). Его нельзя поменять через `call/apply/bind`, и стрелку нельзя вызвать через `new`.",
+      "keyPoints": [
+        "У обычной функции this зависит от способа вызова",
+        "У стрелочной функции нет своего this — он берётся лексически из внешней области",
+        "call/apply/bind не меняют this стрелочной функции",
+        "Стрелочную функцию нельзя использовать как конструктор (new)"
+      ],
+      "explanation": "Отсюда типичный баг: стрелочная функция как метод объекта не видит сам объект через `this`. И типичное применение: стрелки внутри методов и колбэков, чтобы не терять `this` внешнего контекста.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "У стрелочной функции this берётся из внешней области видимости, где она создана",
+          "isTrue": true
+        },
+        {
+          "text": "Через bind можно поменять this у стрелочной функции",
+          "isTrue": false
+        },
+        {
+          "text": "У обычной функции this зависит от того, как её вызвали",
+          "isTrue": true
+        },
+        {
+          "text": "Стрелочную функцию можно вызвать через new",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions"
+      ]
+    },
+    {
+      "id": "js-core-005",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "variables",
+        "hoisting"
+      ],
+      "prompt": "Чем отличаются var, let и const?",
+      "answer": "- **Область видимости:** `var` — функциональная, `let`/`const` — блочная (`{}`).\n- **Hoisting:** все три поднимаются, но `var` инициализируется `undefined`, а `let`/`const` находятся в Temporal Dead Zone до строки объявления — обращение даёт ReferenceError.\n- **Переприсваивание:** `const` нельзя переприсвоить, но объект в `const` можно мутировать.\n- **Повторное объявление:** `var` можно объявить повторно, `let`/`const` — нет.\n- `var` на верхнем уровне создаёт свойство глобального объекта.",
+      "keyPoints": [
+        "var — функциональная область видимости, let/const — блочная",
+        "let/const в Temporal Dead Zone до объявления, var поднимается как undefined",
+        "const запрещает переприсваивание, но не мутацию объекта",
+        "var можно объявить повторно, let/const — нет"
+      ],
+      "explanation": "Классический пример — цикл `for (var i...)` с setTimeout внутри: все колбэки видят одну и ту же `i`. С `let` на каждую итерацию создаётся своя переменная.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "let и const имеют блочную область видимости",
+          "Обращение к let до объявления вызывает ReferenceError",
+          "Свойства объекта, объявленного через const, можно изменять"
+        ],
+        "distractors": [
+          "let и const не поднимаются (hoisting) вообще",
+          "var имеет блочную область видимости",
+          "const делает объект полностью неизменяемым"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let"
+      ]
+    },
+    {
+      "id": "js-core-006",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "types"
+      ],
+      "prompt": "Какие типы данных есть в JavaScript?",
+      "answer": "В JavaScript 8 типов: 7 примитивных — `string`, `number`, `bigint`, `boolean`, `undefined`, `null`, `symbol` — и `object`. Массивы, функции, даты, Map/Set — это разновидности объектов.\n\nПримитивы неизменяемы и копируются по значению. Объекты копируются по ссылке. `typeof` возвращает `\"function\"` для функций и `\"object\"` для `null` — это историческая ошибка языка.",
+      "keyPoints": [
+        "7 примитивов: string, number, bigint, boolean, undefined, null, symbol",
+        "Восьмой тип — object; массивы и функции — тоже объекты",
+        "Примитивы копируются по значению, объекты — по ссылке",
+        "typeof null возвращает \"object\" — историческая ошибка"
+      ],
+      "explanation": "Частые ошибки — забыть `bigint` и `symbol` или назвать массив отдельным типом. `Array.isArray()` нужен именно потому, что `typeof []` вернёт `\"object\"`.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "symbol",
+          "bigint",
+          "null",
+          "undefined"
+        ],
+        "distractors": [
+          "array",
+          "function",
+          "date"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Data_structures"
+      ]
+    },
+    {
+      "id": "js-core-007",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "types",
+        "null"
+      ],
+      "prompt": "Чем отличаются null и undefined?",
+      "answer": "`undefined` — значение «ещё не присвоено»: так выглядит объявленная переменная без значения, отсутствующее свойство объекта, непереданный аргумент, результат функции без `return`.\n\n`null` — явное «пустое значение», которое разработчик ставит сам.\n\n`typeof undefined === \"undefined\"`, а `typeof null === \"object\"` (ошибка языка). `null == undefined` — `true`, но `null === undefined` — `false`.",
+      "keyPoints": [
+        "undefined — значение не присвоено (переменная, свойство, аргумент, return)",
+        "null — явное пустое значение, задаётся намеренно",
+        "typeof null === \"object\", typeof undefined === \"undefined\"",
+        "null == undefined — true, а при === — false"
+      ],
+      "explanation": "Запомните правило: `undefined` ставит движок, `null` — программист. Отсюда и `??`: он реагирует на оба значения.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "typeof null возвращает \"null\"",
+          "isTrue": false
+        },
+        {
+          "text": "null == undefined возвращает true",
+          "isTrue": true
+        },
+        {
+          "text": "Функция без return возвращает undefined",
+          "isTrue": true
+        },
+        {
+          "text": "null === undefined возвращает true",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/null"
+      ]
+    },
+    {
+      "id": "js-core-008",
+      "level": 2,
+      "difficulty": "junior",
+      "tags": [
+        "equality",
+        "coercion"
+      ],
+      "prompt": "Чем отличаются == и ===? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "console.log(0 == '', null == undefined, NaN == NaN, null == 0);"
+      },
+      "answer": "Вывод: `true true false false`.\n\n`===` (строгое равенство) сравнивает без приведения типов: разные типы — сразу `false`. `==` (нестрогое) сначала приводит операнды к одному типу: `0 == ''` → оба становятся `0`.\n\nОсобые правила: `null == undefined` — `true`, но `null` не равен ничему другому, включая `0`. `NaN` не равен ничему, даже себе.",
+      "keyPoints": [
+        "=== сравнивает без приведения типов",
+        "== приводит операнды к одному типу перед сравнением",
+        "null == undefined — true, но null == 0 — false",
+        "NaN не равен ничему, даже самому себе"
+      ],
+      "explanation": "`null == 0` — `false`, хотя `null >= 0` — `true`: операторы сравнения приводят `null` к числу, а `==` для `null` работает по особому правилу. На практике используйте `===`.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "true true false false",
+        "distractors": [
+          "false true false true",
+          "true false false true",
+          "true true true false"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness"
+      ]
+    },
+    {
+      "id": "js-core-009",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "coercion"
+      ],
+      "prompt": "Как работает неявное приведение типов? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "console.log(\"5\" + 2, \"5\" - 2, [] + {}, true + 1);"
+      },
+      "answer": "Вывод: `52 3 [object Object] 2`.\n\n- `+` со строкой превращается в конкатенацию: `\"5\" + 2` → `\"52\"`.\n- Остальные арифметические операторы (`-`, `*`, `/`) приводят к числу: `\"5\" - 2` → `3`.\n- Объекты сначала приводятся к примитиву (`valueOf`/`toString`): `[]` → `\"\"`, `{}` → `\"[object Object]\"`.\n- `true` в числовом контексте — `1`.",
+      "keyPoints": [
+        "+ со строкой — конкатенация",
+        "-, *, / приводят операнды к числу",
+        "Объекты приводятся к примитиву через valueOf/toString",
+        "true → 1, false → 0 в числовом контексте"
+      ],
+      "explanation": "Ключ — оператор `+` единственный «двуличный»: если хотя бы один операнд — строка, он склеивает. Остальные арифметические операторы всегда работают с числами.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "52 3 [object Object] 2",
+        "distractors": [
+          "7 3 [object Object] 2",
+          "52 3 0 true1",
+          "52 52 {} 2"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Glossary/Type_coercion"
+      ]
+    },
+    {
+      "id": "js-core-010",
+      "level": 2,
+      "difficulty": "junior",
+      "tags": [
+        "reference",
+        "types"
+      ],
+      "prompt": "Чем отличается копирование примитивов и объектов? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "let a = { x: 1 };\nlet b = a;\nb.x = 2;\n\nlet c = 5;\nlet d = c;\nd = 6;\n\nconsole.log(a.x, c);"
+      },
+      "answer": "Вывод: `2 5`.\n\nПримитивы копируются по значению: `d = c` создаёт независимую копию, изменение `d` не трогает `c`. Объекты копируются по ссылке: `b = a` — это вторая ссылка на тот же объект, поэтому `b.x = 2` меняет и `a.x`.",
+      "keyPoints": [
+        "Примитивы копируются по значению",
+        "Объекты присваиваются по ссылке — обе переменные указывают на один объект",
+        "Изменение объекта через одну ссылку видно через другую"
+      ],
+      "explanation": "То же самое происходит при передаче в функцию: мутация объекта-аргумента внутри функции видна снаружи. Поэтому в React состояние обновляют новым объектом, а не мутацией.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "2 5",
+        "distractors": [
+          "1 5",
+          "2 6",
+          "1 6"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Data_structures"
+      ]
+    },
+    {
+      "id": "js-core-011",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "copy",
+        "objects"
+      ],
+      "prompt": "Чем отличается поверхностная копия от глубокой? Как сделать глубокую копию?",
+      "answer": "Поверхностная копия (`{...obj}`, `Object.assign`, `arr.slice()`) копирует только первый уровень: вложенные объекты остаются общими ссылками.\n\nГлубокая копия рекурсивно копирует всё. Современный способ — `structuredClone(obj)`: поддерживает Date, Map, Set, циклические ссылки, но не копирует функции и DOM-узлы.\n\n`JSON.parse(JSON.stringify(obj))` — старый способ с потерями: теряет `undefined`, функции, превращает Date в строку, падает на циклических ссылках.",
+      "keyPoints": [
+        "Поверхностная копия копирует только первый уровень, вложенные объекты общие",
+        "Spread и Object.assign делают поверхностную копию",
+        "structuredClone делает глубокую копию, включая Date, Map, Set и циклы",
+        "JSON.parse(JSON.stringify()) теряет функции, undefined, Date"
+      ],
+      "explanation": "Типичный баг: скопировали состояние через spread, поменяли вложенное поле — и изменили оригинал. В React это ломает сравнение и ререндер.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "{ ...obj } копирует только первый уровень вложенности",
+          "structuredClone() копирует вложенные объекты, Map и Date",
+          "JSON.parse(JSON.stringify(obj)) теряет функции и undefined"
+        ],
+        "distractors": [
+          "Object.assign делает глубокую копию",
+          "structuredClone копирует функции",
+          "arr.slice() копирует вложенные массивы"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone"
+      ]
+    },
+    {
+      "id": "js-core-012",
+      "level": 2,
+      "difficulty": "junior",
+      "tags": [
+        "hoisting",
+        "functions"
+      ],
+      "prompt": "Чем Function Declaration отличается от Function Expression с точки зрения hoisting? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "console.log(typeof foo, typeof bar);\n\nfunction foo() {}\nvar bar = function () {};"
+      },
+      "answer": "Вывод: `function undefined`.\n\nFunction Declaration поднимается целиком: функцию можно вызвать до строки объявления. При Function Expression поднимается только переменная: с `var` она равна `undefined` до присваивания, с `let`/`const` — находится в TDZ и даёт ReferenceError.",
+      "keyPoints": [
+        "Function Declaration поднимается целиком вместе с телом",
+        "При Function Expression поднимается только объявление переменной",
+        "var-переменная до присваивания равна undefined, let/const — в TDZ"
+      ],
+      "explanation": "Если бы вместо `typeof bar` был вызов `bar()`, получили бы TypeError: bar is not a function — переменная есть, а функции в ней ещё нет.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "function undefined",
+        "distractors": [
+          "function function",
+          "undefined undefined",
+          "ReferenceError"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Glossary/Hoisting"
+      ]
+    },
+    {
+      "id": "js-core-013",
+      "level": 2,
+      "difficulty": "junior",
+      "tags": [
+        "functions",
+        "functional"
+      ],
+      "prompt": "Что такое функция высшего порядка и чистая функция?",
+      "answer": "**Функция высшего порядка** принимает функцию как аргумент или возвращает функцию: `map`, `filter`, `reduce`, `setTimeout`, обёртки вроде `debounce`. Это возможно, потому что функции в JS — значения первого класса.\n\n**Чистая функция** при одних и тех же аргументах всегда возвращает один результат и не имеет побочных эффектов: не меняет внешние переменные и аргументы, не делает запросов, не пишет в DOM. Чистые функции легко тестировать и мемоизировать.",
+      "keyPoints": [
+        "Функция высшего порядка принимает или возвращает функцию",
+        "Возможно, потому что функции — значения первого класса",
+        "Чистая функция: одинаковый вход → одинаковый выход",
+        "Чистая функция не имеет побочных эффектов"
+      ],
+      "explanation": "Связь с React: компонент должен быть чистым относительно пропсов и состояния, а побочные эффекты выносятся в `useEffect` и обработчики событий.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Array.prototype.map — функция высшего порядка, потому что принимает функцию"
+        ],
+        "distractors": [
+          "Функция высшего порядка — функция, объявленная на верхнем уровне модуля",
+          "Функция, которая читает Date.now(), — чистая, если не меняет переменных",
+          "Функция высшего порядка — функция, которая вызывает сама себя"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Glossary/First-class_Function"
+      ]
+    },
+    {
+      "id": "js-core-014",
+      "level": 2,
+      "difficulty": "junior",
+      "tags": [
+        "NaN",
+        "numbers"
+      ],
+      "prompt": "Как правильно проверить значение на NaN? Чем isNaN отличается от Number.isNaN?",
+      "answer": "`NaN` — единственное значение в JS, не равное самому себе, поэтому `x === NaN` всегда `false`.\n\n- `Number.isNaN(x)` — `true`, только если `x` действительно `NaN`. Правильный способ.\n- Глобальный `isNaN(x)` сначала приводит аргумент к числу: `isNaN(\"abc\")` → `true`, хотя это строка.\n- `Object.is(x, NaN)` — тоже корректная проверка.\n\n`typeof NaN === \"number\"`.",
+      "keyPoints": [
+        "NaN не равен самому себе, сравнение через === не работает",
+        "Number.isNaN проверяет без приведения типов",
+        "Глобальный isNaN приводит аргумент к числу — isNaN(\"abc\") === true",
+        "typeof NaN === \"number\""
+      ],
+      "explanation": "Глобальный `isNaN` отвечает на вопрос «станет ли это NaN после приведения к числу», а не «это NaN?». Отсюда и ложные срабатывания на строках.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "NaN === NaN возвращает true",
+          "isTrue": false
+        },
+        {
+          "text": "isNaN(\"abc\") возвращает true",
+          "isTrue": true
+        },
+        {
+          "text": "Number.isNaN(\"abc\") возвращает true",
+          "isTrue": false
+        },
+        {
+          "text": "typeof NaN возвращает \"number\"",
+          "isTrue": true
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN"
+      ]
+    },
+    {
+      "id": "js-core-015",
+      "level": 3,
+      "difficulty": "junior",
+      "tags": [
+        "this",
+        "call-apply-bind"
+      ],
+      "prompt": "Чем отличаются call, apply и bind?",
+      "answer": "Все три задают `this` для функции.\n\n- `fn.call(ctx, a, b)` — вызывает сразу, аргументы через запятую.\n- `fn.apply(ctx, [a, b])` — вызывает сразу, аргументы массивом.\n- `fn.bind(ctx, a)` — не вызывает, а возвращает новую функцию с навсегда привязанным `this` и, при желании, частью аргументов (частичное применение).\n\nПривязку `bind` нельзя переопределить повторным `bind` или `call`. На стрелочные функции все три не влияют.",
+      "keyPoints": [
+        "call и apply вызывают функцию сразу с заданным this",
+        "call принимает аргументы списком, apply — массивом",
+        "bind возвращает новую функцию с привязанным this, не вызывая её",
+        "bind позволяет частично применить аргументы; повторный bind не меняет this"
+      ],
+      "explanation": "Мнемоника: **a**pply — **a**rray. `bind` — для колбэков, когда функцию вызовут позже (обработчики событий, setTimeout).",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "call и apply вызывают функцию сразу",
+          "apply принимает аргументы массивом",
+          "bind возвращает новую функцию и не вызывает её"
+        ],
+        "distractors": [
+          "bind вызывает функцию сразу и возвращает результат",
+          "Повторный bind переопределяет this",
+          "call меняет this у стрелочной функции"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind"
+      ]
+    },
+    {
+      "id": "js-core-016",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "this",
+        "context-loss"
+      ],
+      "prompt": "Что такое потеря контекста? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "'use strict';\nconst user = {\n  name: 'Ann',\n  getName() {\n    return this?.name;\n  },\n};\nconst fn = user.getName;\nconsole.log(user.getName(), fn());"
+      },
+      "answer": "Вывод: `Ann undefined`.\n\n`this` определяется в момент вызова. `user.getName()` — вызов как метода, `this === user`. `const fn = user.getName` копирует только функцию, связь с объектом теряется. `fn()` — обычный вызов, в strict mode `this === undefined`.\n\nКак исправить: `user.getName.bind(user)`, обёртка `() => user.getName()` или стрелочная функция в поле класса.",
+      "keyPoints": [
+        "this определяется способом вызова, а не местом объявления",
+        "Функция, извлечённая из объекта, теряет связь с ним",
+        "В strict mode при обычном вызове this === undefined",
+        "Исправить: bind, обёртка-стрелка или стрелочное поле класса"
+      ],
+      "explanation": "Типичные места потери контекста: передача метода как колбэка (`setTimeout(user.getName)`, `button.addEventListener('click', obj.method)`) и деструктуризация методов.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "Ann undefined",
+        "distractors": [
+          "Ann Ann",
+          "undefined undefined",
+          "Ann TypeError"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this"
+      ]
+    },
+    {
+      "id": "js-core-017",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "prototypes",
+        "inheritance"
+      ],
+      "prompt": "Как работает прототипное наследование? Расставьте шаги поиска свойства по порядку.",
+      "answer": "У каждого объекта есть скрытая ссылка `[[Prototype]]` (доступна через `Object.getPrototypeOf` или `__proto__`). При чтении свойства движок ищет его:\n\n1. в самом объекте;\n2. в его прототипе (например, `Foo.prototype` для `new Foo()`);\n3. дальше по цепочке — `Object.prototype`;\n4. дошли до `null` — возвращается `undefined`.\n\nЗапись свойства всегда идёт в сам объект, а не в прототип. Методы, объявленные в прототипе, общие для всех экземпляров — так экономится память. Классы ES2015 — синтаксический сахар над этим механизмом.",
+      "keyPoints": [
+        "У объекта есть ссылка [[Prototype]] на другой объект",
+        "Свойство ищется сначала в объекте, затем вверх по цепочке прототипов",
+        "Цепочка заканчивается на null, тогда результат — undefined",
+        "Классы — синтаксический сахар над прототипами"
+      ],
+      "explanation": "Частая путаница: `Foo.prototype` — это объект, который станет прототипом экземпляров, а не прототип самой функции `Foo`.",
+      "formats": [
+        "ordering",
+        "open_text",
+        "open_voice"
+      ],
+      "ordering": [
+        "Собственные свойства объекта",
+        "Прототип объекта (например, Foo.prototype)",
+        "Object.prototype",
+        "null — свойство не найдено, результат undefined"
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain"
+      ]
+    },
+    {
+      "id": "js-core-018",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "new",
+        "constructors"
+      ],
+      "prompt": "Что делает оператор new? Расставьте шаги по порядку.",
+      "answer": "При вызове `new Foo(args)`:\n\n1. Создаётся пустой объект.\n2. Его `[[Prototype]]` указывает на `Foo.prototype`.\n3. `Foo` вызывается с `this`, равным новому объекту.\n4. Если `Foo` вернула объект — результатом будет он, иначе возвращается созданный объект.\n\nСтрелочные функции нельзя вызвать через `new`: у них нет своего `this` и свойства `prototype`.",
+      "keyPoints": [
+        "Создаётся новый пустой объект",
+        "Его прототипом становится Foo.prototype",
+        "Конструктор вызывается с this = новый объект",
+        "Возвращается новый объект, если конструктор не вернул другой объект"
+      ],
+      "explanation": "Если забыть `new` у функции-конструктора, `this` будет `undefined` (strict mode) или глобальным объектом. Классы защищают от этого: вызов класса без `new` бросает TypeError.",
+      "formats": [
+        "ordering",
+        "open_text",
+        "open_voice"
+      ],
+      "ordering": [
+        "Создаётся новый пустой объект",
+        "Прототипом объекта становится Foo.prototype",
+        "Foo вызывается с this, указывающим на новый объект",
+        "Возвращается новый объект (если Foo не вернула другой объект)"
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new"
+      ]
+    },
+    {
+      "id": "js-core-019",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "classes",
+        "prototypes"
+      ],
+      "prompt": "Чем классы ES2015 отличаются от функций-конструкторов?",
+      "answer": "Классы работают на тех же прототипах, но:\n\n- класс нельзя вызвать без `new` — будет TypeError;\n- код класса всегда в strict mode;\n- методы класса неперечисляемые (не видны в `for...in`);\n- объявление класса поднимается, но находится в TDZ, как `let`;\n- есть удобный синтаксис: `extends`, `super`, `static`, приватные поля `#field`, геттеры и сеттеры.",
+      "keyPoints": [
+        "Классы — синтаксический сахар над прототипами",
+        "Класс нельзя вызвать без new",
+        "Тело класса всегда в strict mode, методы неперечисляемые",
+        "extends/super, static и приватные поля #field"
+      ],
+      "explanation": "На вопрос «что такое класс в JS» хороший ответ начинается с «это функция-конструктор с прототипом»: `typeof class {} === \"function\"`.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "typeof class A {} возвращает \"function\"",
+          "isTrue": true
+        },
+        {
+          "text": "Класс можно вызвать без new, как обычную функцию",
+          "isTrue": false
+        },
+        {
+          "text": "Код внутри класса всегда выполняется в strict mode",
+          "isTrue": true
+        },
+        {
+          "text": "Классы вводят в JS отдельную модель наследования, без прототипов",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes"
+      ]
+    },
+    {
+      "id": "js-core-020",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "objects",
+        "prototypes"
+      ],
+      "prompt": "Чем отличаются оператор in, hasOwnProperty и Object.hasOwn? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "const obj = Object.create({ inherited: 1 });\nobj.own = 2;\n\nconsole.log(\n  'inherited' in obj,\n  obj.hasOwnProperty('inherited'),\n  Object.hasOwn(obj, 'own'),\n  Object.keys(obj).length,\n);"
+      },
+      "answer": "Вывод: `true false true 1`.\n\n- `'key' in obj` ищет свойство в объекте и по всей цепочке прототипов.\n- `obj.hasOwnProperty('key')` и `Object.hasOwn(obj, 'key')` — только собственные свойства. `Object.hasOwn` надёжнее: работает и для объектов без прототипа (`Object.create(null)`).\n- `Object.keys` возвращает только собственные перечисляемые свойства.",
+      "keyPoints": [
+        "in проверяет объект и всю цепочку прототипов",
+        "hasOwnProperty и Object.hasOwn — только собственные свойства",
+        "Object.hasOwn работает и для объектов без прототипа",
+        "Object.keys возвращает только собственные перечисляемые ключи"
+      ],
+      "explanation": "`Object.create(proto)` создаёт объект с заданным прототипом: свойство `inherited` есть в прототипе, но не в самом объекте.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "true false true 1",
+        "distractors": [
+          "true true true 2",
+          "false false true 1",
+          "true false true 2"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwn"
+      ]
+    },
+    {
+      "id": "js-core-021",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "map",
+        "weakmap",
+        "collections"
+      ],
+      "prompt": "Чем Map отличается от обычного объекта? А WeakMap от Map?",
+      "answer": "**Map vs объект:**\n- ключом в Map может быть что угодно (объект, функция), в объекте — только строки и символы;\n- Map хранит порядок вставки и имеет `size`;\n- Map итерируется напрямую (`for...of`), нет унаследованных ключей из прототипа;\n- Map быстрее при частых добавлениях и удалениях.\n\n**WeakMap:** ключи — только объекты, и ссылка на ключ «слабая»: если на объект больше никто не ссылается, сборщик мусора удаляет его вместе с записью. Поэтому WeakMap нельзя перебрать и у неё нет `size`. Применение — кэш и приватные данные, привязанные к объектам, без утечек памяти.",
+      "keyPoints": [
+        "Ключом Map может быть любое значение, в объекте — только строки и символы",
+        "Map сохраняет порядок вставки, есть size и прямая итерация",
+        "WeakMap держит ключи-объекты слабо — запись удаляется вместе с объектом",
+        "WeakMap нельзя перебрать, нет size; применение — кэш без утечек"
+      ],
+      "explanation": "Почему WeakMap не итерируется: её содержимое зависит от того, когда сработает сборщик мусора, а это недетерминировано.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Ключом в Map может быть объект",
+          "WeakMap не мешает сборщику мусора удалить объект-ключ",
+          "Map сохраняет порядок добавления ключей"
+        ],
+        "distractors": [
+          "WeakMap можно перебрать через for...of",
+          "Ключом WeakMap может быть строка",
+          "У объекта есть свойство size, как у Map"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap"
+      ]
+    },
+    {
+      "id": "js-core-022",
+      "level": 4,
+      "difficulty": "junior",
+      "tags": [
+        "promises",
+        "async"
+      ],
+      "prompt": "Что такое Promise? Какие у него состояния?",
+      "answer": "Promise — объект-обёртка над результатом асинхронной операции, который будет известен позже.\n\nСостояния: `pending` (ожидание) → `fulfilled` (выполнен с результатом) или `rejected` (отклонён с ошибкой). Перейти из конечного состояния обратно нельзя — промис выполняется один раз.\n\nРезультат обрабатывают через `.then`, `.catch`, `.finally` или `await`. Колбэки `.then` всегда выполняются асинхронно, как микрозадачи. Промисы решают проблему «callback hell»: цепочки вместо вложенности и единая обработка ошибок.",
+      "keyPoints": [
+        "Promise — объект для результата асинхронной операции в будущем",
+        "Три состояния: pending, fulfilled, rejected",
+        "Состояние меняется один раз и необратимо",
+        "Обработчики .then выполняются как микрозадачи"
+      ],
+      "explanation": "Частая ошибка — сказать, что у промиса есть состояние `resolved`. «Resolved» означает, что судьба промиса определена (в том числе другим промисом), а не отдельное состояние.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "pending, fulfilled, rejected — и из fulfilled нельзя вернуться в pending"
+        ],
+        "distractors": [
+          "pending, resolved, rejected, finished",
+          "pending, fulfilled, rejected — и промис можно выполнить повторно",
+          "waiting, success, error"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
+      ]
+    },
+    {
+      "id": "js-core-023",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "promises",
+        "combinators"
+      ],
+      "prompt": "Чем отличаются Promise.all, Promise.allSettled, Promise.race и Promise.any?",
+      "answer": "Все принимают массив промисов и запускают их параллельно.\n\n- `Promise.all` — ждёт все; отклоняется сразу при первой ошибке.\n- `Promise.allSettled` — ждёт все и никогда не отклоняется; возвращает массив `{status, value | reason}`.\n- `Promise.race` — результат первого завершившегося, успешного или нет.\n- `Promise.any` — первый успешный; отклоняется с `AggregateError`, только если упали все.",
+      "keyPoints": [
+        "all — все результаты, падает при первой ошибке",
+        "allSettled — ждёт все и возвращает статус каждого",
+        "race — первый завершившийся, успешный или нет",
+        "any — первый успешный, AggregateError если упали все"
+      ],
+      "explanation": "Когда что: `all` — нужны все данные для страницы; `allSettled` — независимые запросы, показать то, что пришло; `race` — таймаут для запроса; `any` — самое быстрое из зеркал.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Promise.all отклоняется, как только отклонился любой из промисов",
+          "isTrue": true
+        },
+        {
+          "text": "Promise.allSettled отклоняется, если хотя бы один промис упал",
+          "isTrue": false
+        },
+        {
+          "text": "Promise.race возвращает результат первого завершившегося промиса, даже если это ошибка",
+          "isTrue": true
+        },
+        {
+          "text": "Promise.any возвращает первый отклонённый промис",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled"
+      ]
+    },
+    {
+      "id": "js-core-024",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "async-await",
+        "event-loop"
+      ],
+      "prompt": "Как работает async/await? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "async function f() {\n  console.log(1);\n  await null;\n  console.log(2);\n}\n\nconsole.log(3);\nf();\nconsole.log(4);"
+      },
+      "answer": "Вывод: `3 1 4 2`.\n\n`async`-функция выполняется синхронно до первого `await`, поэтому `1` выводится сразу при вызове. `await` приостанавливает функцию, а остаток (`console.log(2)`) ставится в очередь микрозадач. Управление возвращается наружу, выводится `4`. Когда стек пуст, выполняется продолжение — `2`.\n\n`async`-функция всегда возвращает Promise, а `await` — синтаксический сахар над `.then`.",
+      "keyPoints": [
+        "async-функция выполняется синхронно до первого await",
+        "await приостанавливает функцию, продолжение идёт микрозадачей",
+        "async-функция всегда возвращает Promise",
+        "async/await — синтаксический сахар над промисами"
+      ],
+      "explanation": "Ловушка — думать, что всё тело `async`-функции асинхронно. Синхронная часть до первого `await` выполняется сразу, в момент вызова.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "3 1 4 2",
+        "distractors": [
+          "3 4 1 2",
+          "1 2 3 4",
+          "3 1 2 4"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function"
+      ]
+    },
+    {
+      "id": "js-core-025",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "promises",
+        "errors"
+      ],
+      "prompt": "Как обрабатываются ошибки в цепочке промисов? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "Promise.resolve(1)\n  .then(() => {\n    throw new Error('boom');\n  })\n  .then(() => console.log('A'))\n  .catch(() => console.log('B'))\n  .then(() => console.log('C'));"
+      },
+      "answer": "Вывод: `B C`.\n\nОшибка, брошенная в `.then`, превращает промис в rejected. Все следующие `.then` пропускаются, пока не встретится `.catch`. После `.catch` цепочка снова «здорова» (если сам catch не бросил ошибку), поэтому следующий `.then` выполняется.\n\nВ `async/await` то же самое пишут через `try/catch`. Необработанное отклонение вызывает событие `unhandledrejection`.",
+      "keyPoints": [
+        "throw внутри .then отклоняет промис",
+        "Следующие .then пропускаются до ближайшего .catch",
+        "После .catch цепочка продолжается как успешная",
+        "В async/await ошибки ловятся через try/catch"
+      ],
+      "explanation": "`.catch` работает как `try/catch` для всего, что выше по цепочке. Чтобы ошибка пошла дальше, внутри `.catch` её нужно пробросить повторно (`throw e`).",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "B C",
+        "distractors": [
+          "A B C",
+          "B",
+          "A C"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises"
+      ]
+    },
+    {
+      "id": "js-core-026",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "async-await",
+        "performance"
+      ],
+      "prompt": "Как выполнить несколько асинхронных запросов параллельно, а не последовательно?",
+      "answer": "`await` в цикле выполняет запросы **последовательно**: каждый следующий ждёт предыдущий, общее время — сумма.\n\nДля параллельного выполнения сначала запускают все промисы, потом ждут вместе: `await Promise.all(ids.map((id) => fetchUser(id)))`. Общее время — время самого долгого запроса.\n\nПоследовательно нужно, только если запросы зависят друг от друга или нужно ограничить нагрузку. Для ограничения числа одновременных запросов используют пулы (например, батчи по N).",
+      "keyPoints": [
+        "await в цикле выполняет запросы последовательно",
+        "Для параллельности: запустить все промисы, затем Promise.all",
+        "Время параллельного выполнения — самый долгий запрос, а не сумма",
+        "Последовательно — когда запросы зависят друг от друга или нужен лимит нагрузки"
+      ],
+      "explanation": "`forEach` с `async`-колбэком — отдельная ловушка: `forEach` не ждёт промисы, код после него выполнится раньше, чем запросы закончатся.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "await Promise.all(ids.map((id) => fetchUser(id)))"
+        ],
+        "distractors": [
+          "for (const id of ids) { await fetchUser(id); }",
+          "ids.forEach(async (id) => await fetchUser(id)) — и forEach дождётся всех",
+          "await ids.map((id) => fetchUser(id))"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all"
+      ]
+    },
+    {
+      "id": "js-core-027",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "event-loop",
+        "microtasks"
+      ],
+      "prompt": "Что такое микрозадачи и макрозадачи? Что к чему относится?",
+      "answer": "**Макрозадачи (tasks):** выполнение скрипта, `setTimeout`, `setInterval`, события пользователя (клик, ввод), сетевые колбэки, `MessageChannel`. За один оборот event loop берётся одна.\n\n**Микрозадачи:** колбэки `Promise.then/catch/finally`, продолжение после `await`, `queueMicrotask`, `MutationObserver`. Очередь микрозадач опустошается полностью после каждой макрозадачи, до рендеринга.\n\n`requestAnimationFrame` — отдельная очередь, выполняется перед отрисовкой кадра.",
+      "keyPoints": [
+        "Макрозадачи: setTimeout, setInterval, события, I/O",
+        "Микрозадачи: Promise.then, await, queueMicrotask, MutationObserver",
+        "После каждой макрозадачи выполняются все микрозадачи",
+        "requestAnimationFrame — отдельно, перед отрисовкой"
+      ],
+      "explanation": "Практический смысл: микрозадачи позволяют выполнить код «сразу после текущего», но до того, как браузер обработает события и отрисует кадр.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Колбэк Promise.then",
+          "queueMicrotask",
+          "Продолжение async-функции после await"
+        ],
+        "distractors": [
+          "setTimeout(fn, 0)",
+          "Обработчик события click",
+          "setInterval"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide"
+      ]
+    },
+    {
+      "id": "js-core-028",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "closures",
+        "event-loop",
+        "var"
+      ],
+      "prompt": "Классическая задача: что выведет код и как это исправить?",
+      "code": {
+        "lang": "js",
+        "source": "for (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}"
+      },
+      "answer": "Вывод: `3 3 3`.\n\n`var` имеет функциональную область видимости: на весь цикл одна переменная `i`. Колбэки `setTimeout` выполнятся после окончания цикла, когда `i` уже равна 3, и все они замыкают одну и ту же переменную.\n\nИсправления: заменить `var` на `let` — тогда на каждую итерацию создаётся новая переменная, и вывод будет `0 1 2`. Старые способы — IIFE или третий аргумент `setTimeout(fn, 0, i)`.",
+      "keyPoints": [
+        "var создаёт одну переменную на весь цикл",
+        "Колбэки выполняются после окончания цикла, когда i = 3",
+        "Все колбэки замыкают одну и ту же переменную",
+        "let создаёт новую переменную на каждую итерацию — вывод 0 1 2"
+      ],
+      "explanation": "Задача проверяет сразу три темы: область видимости `var`, замыкания и event loop. На собеседовании стоит назвать все три.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "3 3 3",
+        "distractors": [
+          "0 1 2",
+          "2 2 2",
+          "undefined undefined undefined"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures"
+      ]
+    },
+    {
+      "id": "js-core-029",
+      "level": 5,
+      "difficulty": "middle",
+      "tags": [
+        "memory",
+        "gc"
+      ],
+      "prompt": "Как работает сборщик мусора в JavaScript? Что вызывает утечки памяти?",
+      "answer": "Сборщик мусора использует алгоритм **mark-and-sweep**: начиная с «корней» (глобальный объект, текущий стек вызовов), помечает все достижимые объекты, а недостижимые удаляет. Поэтому циклические ссылки сами по себе не мешают удалению.\n\nУтечка — когда ненужный объект всё ещё достижим. Частые причины:\n- не снятые обработчики событий и подписки;\n- не очищенные `setInterval` и таймеры;\n- замыкания, держащие большие данные;\n- растущие глобальные кэши и массивы;\n- ссылки на удалённые DOM-элементы.",
+      "keyPoints": [
+        "Mark-and-sweep: удаляются объекты, недостижимые от корней",
+        "Циклические ссылки не мешают сборке",
+        "Утечка — ненужный объект остаётся достижимым",
+        "Причины: обработчики, таймеры, замыкания, глобальные кэши, ссылки на DOM"
+      ],
+      "explanation": "В React утечки чаще всего возникают из-за `useEffect` без функции очистки: подписка или интервал переживают размонтирование компонента.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "setInterval, который не очищают через clearInterval",
+          "Обработчик события, который не сняли через removeEventListener",
+          "Глобальный кэш, в который только добавляют данные"
+        ],
+        "distractors": [
+          "Два объекта, которые ссылаются друг на друга и больше ни на кого",
+          "Локальная переменная функции после её завершения",
+          "Использование let вместо var"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Memory_management"
+      ]
+    },
+    {
+      "id": "js-core-030",
+      "level": 5,
+      "difficulty": "middle",
+      "tags": [
+        "debounce",
+        "throttle",
+        "performance"
+      ],
+      "prompt": "Чем debounce отличается от throttle? Где их применяют?",
+      "answer": "Обе техники ограничивают частоту вызовов функции.\n\n- **Debounce** — вызвать функцию, только когда события прекратились на N мс. Каждое новое событие сбрасывает таймер. Применение: поиск при вводе, сохранение черновика, ресайз окна «по окончании».\n- **Throttle** — вызывать не чаще одного раза в N мс, как бы часто ни приходили события. Применение: обработка скролла, движения мыши, отправка аналитики.\n\nОбе реализуются через замыкание и `setTimeout`.",
+      "keyPoints": [
+        "Debounce — вызов после паузы в событиях, таймер сбрасывается",
+        "Throttle — не чаще одного вызова за интервал",
+        "Debounce для поиска при вводе, throttle для скролла и mousemove",
+        "Реализуются через замыкание и setTimeout"
+      ],
+      "explanation": "Простой пример: при debounce 300 мс человек, который печатает без остановки 5 секунд, вызовет функцию один раз. При throttle 300 мс — примерно 16 раз.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Поиск при вводе — debounce, обработка скролла — throttle"
+        ],
+        "distractors": [
+          "Поиск при вводе — throttle, обработка скролла — debounce",
+          "Debounce вызывает функцию не чаще раза в N мс",
+          "Throttle откладывает вызов, пока события не прекратятся"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Glossary/Debounce"
+      ]
+    },
+    {
+      "id": "js-core-031",
+      "level": 5,
+      "difficulty": "middle",
+      "tags": [
+        "memoization",
+        "currying",
+        "functional"
+      ],
+      "prompt": "Что такое мемоизация и каррирование?",
+      "answer": "**Мемоизация** — кэширование результата функции по аргументам: при повторном вызове с теми же аргументами результат берётся из кэша. Работает только для чистых функций. Реализуется через замыкание и `Map`. В React то же делают `useMemo`, `useCallback`, `React.memo`.\n\n**Каррирование** — превращение функции от нескольких аргументов в цепочку функций от одного: `add(1, 2)` → `add(1)(2)`. Позволяет частично применять аргументы и создавать специализированные функции.",
+      "keyPoints": [
+        "Мемоизация — кэш результатов по аргументам",
+        "Мемоизировать можно только чистые функции",
+        "Реализуется через замыкание и Map; в React — useMemo, useCallback, memo",
+        "Каррирование: f(a, b) превращается в f(a)(b)"
+      ],
+      "explanation": "Мемоизация — это обмен памяти на скорость. Если аргументы почти всегда разные, кэш только растёт и ничего не ускоряет.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Мемоизация сохраняет результат по аргументам и возвращает его при повторном вызове"
+        ],
+        "distractors": [
+          "Мемоизация сохраняет функцию в localStorage между перезагрузками",
+          "Мемоизировать можно любую функцию, в том числе с запросами к API без учёта времени",
+          "Каррирование — это кэширование результата функции"
+        ]
+      },
+      "sources": [
+        "https://javascript.info/currying-partials"
+      ]
+    },
+    {
+      "id": "js-core-032",
+      "level": 5,
+      "difficulty": "middle",
+      "tags": [
+        "generators",
+        "iterators"
+      ],
+      "prompt": "Что такое генераторы и итераторы? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "function* gen() {\n  yield 1;\n  yield 2;\n  return 3;\n}\n\nconsole.log([...gen()].join(','));"
+      },
+      "answer": "Вывод: `1,2`.\n\n**Итератор** — объект с методом `next()`, который возвращает `{ value, done }`. Объект **итерируемый**, если у него есть метод `[Symbol.iterator]`, — его можно перебирать через `for...of` и spread.\n\n**Генератор** (`function*`) — функция, которую можно приостанавливать через `yield`. Вызов возвращает итератор. Значение из `return` попадает в последний `{ value, done: true }`, но `for...of` и spread его игнорируют — поэтому `3` в вывод не попадает.",
+      "keyPoints": [
+        "Итератор — объект с next(), возвращающим { value, done }",
+        "Итерируемый объект реализует Symbol.iterator",
+        "Генератор function* приостанавливается на yield и возвращает итератор",
+        "Значение из return генератора не попадает в for...of и spread"
+      ],
+      "explanation": "Генераторы лежат в основе ленивых последовательностей и исторически — async/await (через библиотеки вроде co).",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "1,2",
+        "distractors": [
+          "1,2,3",
+          "3",
+          "[object Generator]"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*"
+      ]
+    },
+    {
+      "id": "js-core-033",
+      "level": 5,
+      "difficulty": "middle",
+      "tags": [
+        "modules"
+      ],
+      "prompt": "Чем отличаются ES Modules и CommonJS?",
+      "answer": "**CommonJS** (`require`, `module.exports`) — исторический формат Node.js. Загрузка синхронная и динамическая: `require` можно вызвать где угодно. Экспортируется копия значения на момент экспорта.\n\n**ES Modules** (`import`, `export`) — стандарт языка, работает в браузере и Node.js. Импорты статические, анализируются до выполнения — это даёт tree shaking. Экспорт — живая привязка (live binding). Модуль всегда в strict mode, поддерживается top-level `await`. Динамическая загрузка — через `import()`, возвращающий Promise.",
+      "keyPoints": [
+        "CommonJS: require/module.exports, синхронная динамическая загрузка",
+        "ESM: import/export — стандарт, статический анализ и tree shaking",
+        "ESM экспортирует живые привязки, CommonJS — копию значения",
+        "ESM всегда strict, есть top-level await и dynamic import()"
+      ],
+      "explanation": "Tree shaking возможен только потому, что ES-импорты статические: сборщик заранее знает, что используется, и выбрасывает остальное.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Статические import позволяют сборщику делать tree shaking",
+          "isTrue": true
+        },
+        {
+          "text": "require в CommonJS можно вызвать внутри if",
+          "isTrue": true
+        },
+        {
+          "text": "ES-модуль выполняется в нестрогом режиме, если не указать 'use strict'",
+          "isTrue": false
+        },
+        {
+          "text": "Динамический import() возвращает модуль синхронно",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules"
+      ]
+    },
+    {
+      "id": "js-core-034",
+      "level": 5,
+      "difficulty": "junior",
+      "tags": [
+        "operators",
+        "nullish"
+      ],
+      "prompt": "Чем ?? отличается от ||? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "console.log(0 || 5, 0 ?? 5, null ?? 'y', false || null);"
+      },
+      "answer": "Вывод: `5 0 y null`.\n\n- `a || b` возвращает `b`, если `a` — **любое ложное значение**: `0`, `''`, `false`, `NaN`, `null`, `undefined`.\n- `a ?? b` возвращает `b`, только если `a` равно `null` или `undefined`.\n\nПоэтому для значений по умолчанию, где `0` или пустая строка допустимы, нужен `??`. Также есть `?.` (опциональная цепочка) и `??=`, `||=` (логическое присваивание).",
+      "keyPoints": [
+        "|| реагирует на любое ложное значение (0, '', false, NaN, null, undefined)",
+        "?? реагирует только на null и undefined",
+        "?? нужен, когда 0 или пустая строка — допустимые значения",
+        "|| возвращает последний операнд, если все ложные"
+      ],
+      "explanation": "Типичный баг: `const count = props.count || 10` — при `count = 0` получится 10. С `??` получится 0.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "5 0 y null",
+        "distractors": [
+          "5 5 y false",
+          "0 0 y null",
+          "5 0 null false"
+        ]
+      },
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing"
+      ]
+    },
+    {
+      "id": "js-core-035",
+      "level": 5,
+      "difficulty": "middle",
+      "tags": [
+        "immutability",
+        "objects"
+      ],
+      "prompt": "Как сделать объект неизменяемым? Что делает Object.freeze?",
+      "answer": "- `Object.freeze(obj)` — запрещает добавлять, удалять и менять свойства. Заморозка **поверхностная**: вложенные объекты можно менять. Для полной заморозки нужен рекурсивный deep freeze.\n- `Object.seal(obj)` — запрещает добавлять и удалять свойства, но значения менять можно.\n- `Object.preventExtensions(obj)` — запрещает только добавление.\n- Отдельное свойство — через дескриптор `Object.defineProperty(obj, 'key', { writable: false })`.\n\nВне strict mode попытка изменить замороженный объект молча игнорируется, в strict mode — TypeError.",
+      "keyPoints": [
+        "Object.freeze запрещает добавлять, удалять и менять свойства",
+        "freeze поверхностный — вложенные объекты остаются изменяемыми",
+        "seal разрешает менять значения, но не добавлять и удалять свойства",
+        "Дескрипторы свойств: writable, enumerable, configurable"
+      ],
+      "explanation": "`const` и `Object.freeze` — разные вещи: `const` запрещает переприсвоить переменную, `freeze` — менять сам объект.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Object.freeze замораживает и вложенные объекты",
+          "isTrue": false
+        },
+        {
+          "text": "У объекта после Object.seal можно менять значения существующих свойств",
+          "isTrue": true
+        },
+        {
+          "text": "В strict mode изменение замороженного объекта бросает TypeError",
+          "isTrue": true
+        },
+        {
+          "text": "const делает объект неизменяемым так же, как Object.freeze",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze"
+      ]
+    }
+  ]
+}

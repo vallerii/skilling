@@ -1,0 +1,108 @@
+{
+  "topics": [
+    {
+      "id": "js-core",
+      "order": 1,
+      "title": "JavaScript core",
+      "description": "Замыкания, this, прототипы, event loop, промисы, async/await, типы и приведение",
+      "target": 35,
+      "focus": "все вакансии"
+    },
+    {
+      "id": "typescript",
+      "order": 2,
+      "title": "TypeScript",
+      "description": "Дженерики, utility types, narrowing, type vs interface, unknown/never, satisfies",
+      "target": 20,
+      "focus": "ApexTech, все"
+    },
+    {
+      "id": "react",
+      "order": 3,
+      "title": "React",
+      "description": "Рендеринг, хуки, reconciliation, ключи, мемоизация, состояние, контекст, React 19",
+      "target": 35,
+      "focus": "все вакансии"
+    },
+    {
+      "id": "nextjs",
+      "order": 4,
+      "title": "Next.js",
+      "description": "App Router, Server/Client Components, SSR/SSG/ISR, кэширование, Server Actions, proxy",
+      "target": 20,
+      "focus": "ApexTech, ORIL"
+    },
+    {
+      "id": "nodejs",
+      "order": 5,
+      "title": "Node.js",
+      "description": "Event loop и libuv, streams, обработка ошибок, REST API, аутентификация",
+      "target": 20,
+      "focus": "fullstack: ORIL, Intelvision, ApexTech"
+    },
+    {
+      "id": "web-network",
+      "order": 6,
+      "title": "Браузер, сеть и безопасность",
+      "description": "HTTP, кэширование, CORS, cookies, рендеринг страницы, XSS/CSRF, производительность",
+      "target": 20,
+      "focus": "все вакансии"
+    },
+    {
+      "id": "databases",
+      "order": 7,
+      "title": "Базы данных",
+      "description": "SQL, JOIN, индексы, транзакции и изоляция, нормализация, SQL vs NoSQL",
+      "target": 15,
+      "focus": "fullstack"
+    },
+    {
+      "id": "aws",
+      "order": 8,
+      "title": "AWS и деплой",
+      "description": "S3, Lambda, CloudFront, IAM, переменные окружения, CI/CD",
+      "target": 10,
+      "focus": "ApexTech"
+    },
+    {
+      "id": "ai-product",
+      "order": 9,
+      "title": "AI в продукте",
+      "description": "Работа с LLM API, стриминг, промпты, RAG и эмбеддинги, стоимость и ограничения",
+      "target": 10,
+      "focus": "ORIL (AI-Native)"
+    },
+    {
+      "id": "product-thinking",
+      "order": 10,
+      "title": "Продуктовое мышление и тех. решения",
+      "description": "Выбор технологий, trade-offs, техдолг, общение со стейкхолдерами, оценка задач",
+      "target": 15,
+      "focus": "ORIL, Nextcrm, Technology Oriented"
+    },
+    {
+      "id": "css-html-a11y",
+      "order": 11,
+      "title": "CSS, HTML и доступность",
+      "description": "Box model, специфичность, позиционирование, Flexbox и Grid, stacking context, современный CSS, семантика, ARIA, клавиатура и формы, WCAG",
+      "target": 20,
+      "focus": "Nextcrm, Technology Oriented, все фронтенд-позиции"
+    },
+    {
+      "id": "frontend-system-design",
+      "order": 12,
+      "title": "Frontend system design",
+      "description": "Подход к проектированию, таблицы данных, real-time, дизайн-система, архитектура состояния, поиск, ленты, массовые операции, наблюдаемость",
+      "target": 10,
+      "focus": "Nextcrm, ORIL, ApexTech"
+    },
+    {
+      "id": "testing-git",
+      "order": 13,
+      "title": "Тестирование и Git",
+      "description": "Пирамида тестов, виды тестов, моки и MSW, асинхронные тесты, нестабильные e2e, merge и rebase, стратегии ветвления, revert и reset, история коммитов",
+      "target": 10,
+      "focus": "все вакансии"
+    }
+  ]
+}

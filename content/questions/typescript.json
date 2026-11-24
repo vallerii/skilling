@@ -1,0 +1,804 @@
+{
+  "topic": "typescript",
+  "questions": [
+    {
+      "id": "typescript-001",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "basics"
+      ],
+      "prompt": "Зачем нужен TypeScript? Какие у него плюсы и минусы?",
+      "answer": "TypeScript — надмножество JavaScript со статической типизацией. Код компилируется в обычный JS, а **типы стираются**: в рантайме их нет, и TS не проверяет данные, пришедшие из API.\n\n**Плюсы:** ошибки находятся до запуска, автодополнение и навигация в IDE, безопасный рефакторинг, типы работают как документация к API компонентов и функций.\n\n**Минусы:** шаг компиляции и настройка, порог входа для сложных типов, соблазн «победить» компилятор через `any` и `as`, ложное чувство безопасности для внешних данных — их нужно валидировать в рантайме (например, Zod).",
+      "keyPoints": [
+        "Надмножество JS со статической типизацией, компилируется в JS",
+        "Типы стираются при компиляции, в рантайме их нет",
+        "Плюсы: ошибки до запуска, автодополнение, безопасный рефакторинг, документация",
+        "Минусы: сборка, сложность типов, any/as; внешние данные нужно валидировать в рантайме"
+      ],
+      "explanation": "Сильный ответ на собеседовании обязательно упоминает, что TS не защищает в рантайме: ответ сервера с типом `User` может оказаться чем угодно.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Типы TypeScript проверяются в браузере во время выполнения",
+          "isTrue": false
+        },
+        {
+          "text": "Любой корректный JS-код — синтаксически корректный TS-код",
+          "isTrue": true
+        },
+        {
+          "text": "Если ответ API описан типом User, TypeScript гарантирует, что сервер вернёт User",
+          "isTrue": false
+        },
+        {
+          "text": "TypeScript компилируется в обычный JavaScript",
+          "isTrue": true
+        }
+      ],
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html"
+      ]
+    },
+    {
+      "id": "typescript-002",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "type",
+        "interface"
+      ],
+      "prompt": "Чем type отличается от interface? Когда что использовать?",
+      "answer": "Для описания формы объекта они почти взаимозаменяемы. Различия:\n\n- **`interface`** описывает только объекты (и классы). Поддерживает **declaration merging**: два `interface User` с одним именем сливаются в один. Расширяется через `extends`.\n- **`type`** — псевдоним для любого типа: union (`'a' | 'b'`), кортежи, примитивы, функции, mapped и conditional types. Не сливается, повторное объявление — ошибка. Комбинируется через `&`.\n\nПрактика: `interface` — для публичных контрактов объектов и когда нужно расширение библиотечных типов; `type` — для union, утилит и всего, что не объект. Главное — единый стиль в проекте.",
+      "keyPoints": [
+        "interface описывает только формы объектов, type — любой тип",
+        "interface поддерживает declaration merging, type — нет",
+        "Union, кортежи, mapped и conditional types возможны только через type",
+        "interface расширяется через extends, type комбинируется через &"
+      ],
+      "explanation": "Ответ «interface для объектов, type для всего остального» — хорошее начало, но сильнее упомянуть declaration merging: именно им расширяют типы библиотек, например `Window` или настройки темы.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Два interface с одним именем сливаются в один",
+          "Union-тип 'success' | 'error' можно объявить только через type",
+          "interface можно расширить через extends"
+        ],
+        "distractors": [
+          "type поддерживает declaration merging",
+          "interface может описывать union примитивов",
+          "type нельзя использовать для описания объекта"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#differences-between-type-aliases-and-interfaces"
+      ]
+    },
+    {
+      "id": "typescript-003",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "any",
+        "unknown",
+        "never"
+      ],
+      "prompt": "Чем отличаются any, unknown и never?",
+      "answer": "- **`any`** — отключает проверку типов: с значением можно делать что угодно, и `any` «заражает» всё, с чем соприкасается. Риск — ошибки уходят в рантайм.\n- **`unknown`** — безопасный аналог: принять можно что угодно, но использовать нельзя, пока не сузишь тип (`typeof`, `instanceof`, type guard, валидация). Правильный тип для внешних данных: `JSON.parse`, ответ API, `catch (e)`.\n- **`never`** — тип без значений: функция, которая всегда бросает ошибку или бесконечна; невозможная ветка после исчерпывающей проверки union. Используется для exhaustive checks.",
+      "keyPoints": [
+        "any отключает проверку типов и распространяется по коду",
+        "unknown принимает всё, но требует сужения перед использованием",
+        "unknown — правильный тип для внешних данных и catch",
+        "never — тип без значений: невозможная ветка, функция, которая не возвращает управление"
+      ],
+      "explanation": "`any` — это «доверься мне», `unknown` — «докажи мне». Ошибка в `catch` в strict-режиме имеет тип `unknown` именно поэтому: бросить можно что угодно, не только Error.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "unknown можно присвоить любое значение, но вызвать метод у него можно только после сужения типа"
+        ],
+        "distractors": [
+          "unknown и any полностью одинаковы, unknown — просто новое имя",
+          "never — тип для значений null и undefined",
+          "any безопаснее unknown, потому что не выдаёт ошибок"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/functions.html#unknown"
+      ]
+    },
+    {
+      "id": "typescript-004",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "union",
+        "intersection"
+      ],
+      "prompt": "Что такое union и intersection типы? Какой тип у result?",
+      "code": {
+        "lang": "ts",
+        "source": "type WithId = { id: number };\ntype WithName = { name: string };\n\nconst result: WithId & WithName = /* ? */;"
+      },
+      "answer": "**Union `A | B`** — значение одного из типов. Пользоваться можно только тем, что есть у всех вариантов, пока тип не сужен.\n\n**Intersection `A & B`** — значение, у которого есть всё из обоих типов одновременно. Для объектов это объединение свойств.\n\nВ примере `WithId & WithName` требует оба свойства, поэтому `result` имеет и `id`, и `name`. Пересечение несовместимых примитивов (`string & number`) даёт `never`.",
+      "keyPoints": [
+        "Union A | B — значение одного из типов",
+        "У union без сужения доступны только общие свойства",
+        "Intersection A & B — значение со всеми свойствами обоих типов",
+        "Пересечение несовместимых типов, например string & number, — never"
+      ],
+      "explanation": "Путаница из-за названий: union «объединяет множества значений», поэтому свойств становится меньше; intersection «пересекает множества», поэтому свойств становится больше.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Объект, у которого обязательно есть и id: number, и name: string"
+        ],
+        "distractors": [
+          "Объект, у которого есть id или name",
+          "never — объекты нельзя пересечь",
+          "Объект, у которого нет ни одного обязательного свойства"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types"
+      ]
+    },
+    {
+      "id": "typescript-005",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "inference",
+        "literal-types"
+      ],
+      "prompt": "Как работает вывод типов? Какие типы выведет TypeScript для a, b и c?",
+      "code": {
+        "lang": "ts",
+        "source": "const a = 'hi';\nlet b = 'hi';\nconst c = [1, 'x'];"
+      },
+      "answer": "TypeScript выводит тип из значения, если аннотации нет.\n\n- `const a = 'hi'` — тип `\"hi\"`: константу нельзя переприсвоить, поэтому тип сужается до литерала.\n- `let b = 'hi'` — тип `string`: переменную можно переприсвоить, тип расширяется (widening).\n- `const c = [1, 'x']` — тип `(string | number)[]`: массив изменяемый, поэтому это не кортеж.\n\nАннотации нужны на границах: параметры функций, публичные API, внешние данные. Внутри функций лучше полагаться на вывод.",
+      "keyPoints": [
+        "Без аннотации тип выводится из значения",
+        "const с примитивом получает литеральный тип",
+        "let расширяет литерал до общего типа (widening)",
+        "Массив выводится как массив union-типа, а не как кортеж"
+      ],
+      "explanation": "Чтобы получить кортеж и литералы, нужен `as const`: `const c = [1, 'x'] as const` даёт `readonly [1, \"x\"]`.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "a: \"hi\", b: string, c: (string | number)[]"
+        ],
+        "distractors": [
+          "a: string, b: string, c: [number, string]",
+          "a: \"hi\", b: \"hi\", c: readonly [1, \"x\"]",
+          "a: string, b: \"hi\", c: any[]"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/type-inference.html"
+      ]
+    },
+    {
+      "id": "typescript-006",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "narrowing"
+      ],
+      "prompt": "Что такое сужение типов (narrowing)? Какие способы сузить тип вы знаете?",
+      "answer": "Сужение — когда TypeScript по проверке в коде понимает, что внутри ветки у значения более конкретный тип.\n\nСпособы:\n- `typeof x === 'string'` — для примитивов;\n- `x instanceof Date` — для классов;\n- `'swim' in animal` — по наличию свойства;\n- проверка на truthiness и равенство (`if (x)`, `x === null`);\n- discriminated union — проверка поля-дискриминанта (`state.status === 'error'`);\n- пользовательские type guards (`x is Fish`) и assertion functions (`asserts x is Fish`).\n\nTS анализирует поток управления (control flow analysis), включая ранний `return`.",
+      "keyPoints": [
+        "Сужение — уточнение типа внутри ветки после проверки",
+        "typeof — для примитивов, instanceof — для классов, in — по свойству",
+        "Проверка поля-дискриминанта в discriminated union",
+        "Пользовательские type guards и assertion functions"
+      ],
+      "explanation": "`typeof null === 'object'`, поэтому проверка `typeof x === 'object'` не исключает `null` — TS это знает и оставит `null` в типе.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "typeof value === 'string'",
+          "value instanceof Date",
+          "'email' in user"
+        ],
+        "distractors": [
+          "value as string",
+          "value satisfies string",
+          "Объявление переменной через const"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/narrowing.html"
+      ]
+    },
+    {
+      "id": "typescript-007",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "type-guards"
+      ],
+      "prompt": "Что такое пользовательский type guard? Как его написать?",
+      "code": {
+        "lang": "ts",
+        "source": "function isString(value: unknown): /* ? */ {\n  return typeof value === 'string';\n}"
+      },
+      "answer": "Type guard — функция, возвращающая тип-предикат `value is Type`. Если она вернула `true`, TypeScript сужает тип аргумента в этой ветке.\n\n```ts\nfunction isUser(value: unknown): value is User {\n  return typeof value === 'object' && value !== null && 'id' in value;\n}\n```\n\nНужен, когда встроенных проверок не хватает: внешние данные, сложные union, фильтрация (`arr.filter(isUser)` вернёт `User[]`).\n\nВажно: TS **верит** предикату на слово и не проверяет, что тело функции правильное. Ошибка в теле — ложная безопасность.",
+      "keyPoints": [
+        "Функция с возвращаемым типом value is Type",
+        "При true TypeScript сужает тип в ветке",
+        "Применение: unknown-данные, сложные union, filter с сужением",
+        "TS не проверяет правильность тела guard — ответственность на разработчике"
+      ],
+      "explanation": "С TypeScript 5.5 простые колбэки в `filter` выводят предикат сами: `arr.filter((x) => x !== null)` уже возвращает массив без `null`.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "value is string"
+        ],
+        "distractors": [
+          "boolean",
+          "value as string",
+          "asserts string"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates"
+      ]
+    },
+    {
+      "id": "typescript-008",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "discriminated-union",
+        "never",
+        "modeling"
+      ],
+      "prompt": "Что такое discriminated union и exhaustive check? Что будет, если добавить новый статус и забыть его обработать?",
+      "code": {
+        "lang": "ts",
+        "source": "type State =\n  | { status: 'loading' }\n  | { status: 'success'; data: string[] }\n  | { status: 'error'; error: Error };\n\nfunction render(state: State) {\n  switch (state.status) {\n    case 'loading': return 'Загрузка…';\n    case 'success': return state.data.join(', ');\n    case 'error': return state.error.message;\n    default: {\n      const unreachable: never = state;\n      return unreachable;\n    }\n  }\n}"
+      },
+      "answer": "**Discriminated union** — union объектов с общим полем-литералом (дискриминантом). Проверка этого поля сужает тип до конкретного варианта: в ветке `'success'` доступно `data`, в `'error'` — `error`.\n\n**Exhaustive check** — в `default` значение присваивается переменной типа `never`. Если все варианты обработаны, туда попадает `never`, и всё компилируется. Если добавить новый статус и забыть ветку, TypeScript выдаст **ошибку компиляции** в `default`.\n\nТак моделируют состояния (загрузка, ошибка, успех) вместо набора опциональных флагов `isLoading`, `error?`, `data?`, допускающих невозможные комбинации.",
+      "keyPoints": [
+        "Union объектов с общим литеральным полем-дискриминантом",
+        "Проверка дискриминанта сужает тип до конкретного варианта",
+        "В default значение присваивается never — exhaustive check",
+        "Необработанный новый вариант даёт ошибку компиляции"
+      ],
+      "explanation": "Это одна из самых ценных техник для продуктового кода: невозможные состояния становятся непредставимыми. На собеседовании по TS для Middle+ её почти всегда просят.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Ошибка компиляции в default: новый вариант нельзя присвоить never"
+        ],
+        "distractors": [
+          "Ошибка в рантайме при вызове render",
+          "Ничего: default молча вернёт undefined",
+          "TypeScript автоматически добавит недостающий case"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions"
+      ]
+    },
+    {
+      "id": "typescript-009",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "enum",
+        "literal-types"
+      ],
+      "prompt": "Чем enum отличается от union строковых литералов? Что лучше использовать?",
+      "answer": "**`enum`** — одна из немногих возможностей TS, которая **создаёт код в рантайме**: объект с ключами и значениями. Числовые enum имеют обратное отображение и принимают любое число. `const enum` встраивается в код, но плохо работает с изолированной компиляцией (Babel, SWC, `isolatedModules`).\n\n**Union литералов** (`'admin' | 'user'`) полностью стирается при компиляции, работает с обычными строками из API и JSON без преобразований.\n\nСовременная практика — union литералов, а если нужен объект со значениями — `const ROLES = { Admin: 'admin' } as const` и `type Role = typeof ROLES[keyof typeof ROLES]`.",
+      "keyPoints": [
+        "enum генерирует объект в рантайме, union литералов стирается",
+        "Числовые enum принимают любое число и имеют обратное отображение",
+        "Union литералов работает с обычными строками из API без преобразований",
+        "Альтернатива enum — объект as const + выведенный из него union"
+      ],
+      "explanation": "Новые флаги вроде `erasableSyntaxOnly` и запуск TS напрямую в Node.js (type stripping) не поддерживают enum: это ещё одна причина предпочитать union.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Обычный enum создаёт объект в скомпилированном JavaScript",
+          "isTrue": true
+        },
+        {
+          "text": "Union строковых литералов существует в рантайме",
+          "isTrue": false
+        },
+        {
+          "text": "Объект с as const можно использовать как замену enum",
+          "isTrue": true
+        },
+        {
+          "text": "Строку 'admin' из JSON можно напрямую присвоить строковому enum без приведения",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums"
+      ]
+    },
+    {
+      "id": "typescript-010",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "as-const",
+        "readonly",
+        "tuples"
+      ],
+      "prompt": "Что делает as const? Какой тип будет у config?",
+      "code": {
+        "lang": "ts",
+        "source": "const config = {\n  mode: 'dark',\n  sizes: [8, 16],\n} as const;"
+      },
+      "answer": "`as const` (const assertion) делает три вещи:\n1. литералы не расширяются: `'dark'` остаётся типом `\"dark\"`, а не `string`;\n2. все свойства объектов становятся `readonly`;\n3. массивы становятся `readonly`-кортежами: `[1, 2]` → `readonly [1, 2]`.\n\nПрименение: конфиги, списки допустимых значений (`const ROLES = ['admin', 'user'] as const; type Role = typeof ROLES[number]`), значения, возвращаемые из хуков как кортеж.\n\n`readonly` проверяется только при компиляции; для заморозки в рантайме нужен `Object.freeze`.",
+      "keyPoints": [
+        "as const запрещает расширение литералов",
+        "Все свойства становятся readonly",
+        "Массивы становятся readonly-кортежами",
+        "Из массива as const получают union: typeof ARR[number]"
+      ],
+      "explanation": "Без `as const` у `config.mode` тип `string`, и его нельзя передать в функцию, ожидающую `'dark' | 'light'`. Это частая причина ошибки «string is not assignable to...».",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "{ readonly mode: \"dark\"; readonly sizes: readonly [8, 16] }"
+        ],
+        "distractors": [
+          "{ mode: string; sizes: number[] }",
+          "{ readonly mode: string; readonly sizes: number[] }",
+          "{ mode: \"dark\"; sizes: [8, 16] }"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions"
+      ]
+    },
+    {
+      "id": "typescript-011",
+      "level": 3,
+      "difficulty": "junior",
+      "tags": [
+        "generics"
+      ],
+      "prompt": "Что такое дженерики и зачем они нужны?",
+      "answer": "Дженерик — параметр типа, который подставляется при использовании функции, класса или типа. Он позволяет писать переиспользуемый код и **сохранять связь между типами** входа и выхода.\n\n```ts\nfunction first<T>(arr: T[]): T | undefined {\n  return arr[0];\n}\nfirst([1, 2]); // number | undefined\n```\n\nС `any` тип результата был бы потерян. Обычно `T` выводится из аргументов автоматически. Примеры из практики: `useState<User | null>(null)`, `Promise<T>`, `Array<T>`, обёртка над fetch `request<T>(url): Promise<T>`.",
+      "keyPoints": [
+        "Дженерик — параметр типа, подставляемый при использовании",
+        "Сохраняет связь между типами входа и выхода, в отличие от any",
+        "Обычно T выводится из аргументов автоматически",
+        "Примеры: useState<T>, Promise<T>, Array<T>"
+      ],
+      "explanation": "Если параметр типа используется только один раз в сигнатуре, он, скорее всего, не нужен: дженерик нужен, чтобы связать два места.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Чтобы функция работала с разными типами и сохраняла связь между типом аргумента и результата"
+        ],
+        "distractors": [
+          "Чтобы отключить проверку типов, как any, но короче",
+          "Чтобы TypeScript проверял типы во время выполнения",
+          "Чтобы функция принимала аргументы любого количества"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/generics.html"
+      ]
+    },
+    {
+      "id": "typescript-012",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "generics",
+        "constraints",
+        "keyof"
+      ],
+      "prompt": "Что такое ограничения дженериков (extends)? Какой тип вернёт getProp(user, 'age')?",
+      "code": {
+        "lang": "ts",
+        "source": "function getProp<T, K extends keyof T>(obj: T, key: K): T[K] {\n  return obj[key];\n}\n\nconst user = { name: 'Ann', age: 30 };\nconst age = getProp(user, 'age');"
+      },
+      "answer": "`T extends Something` ограничивает, какие типы можно подставить. `K extends keyof T` означает «K — один из ключей T», поэтому неправильный ключ даёт ошибку компиляции.\n\n`T[K]` — indexed access type: тип свойства `K` в `T`. Для `getProp(user, 'age')` TS выводит `K = \"age\"` и возвращает `number`. Для `'name'` вернул бы `string`, а `getProp(user, 'email')` не скомпилируется.",
+      "keyPoints": [
+        "T extends X ограничивает допустимые типы",
+        "K extends keyof T — K может быть только ключом T",
+        "T[K] — тип свойства по ключу (indexed access)",
+        "Неверный ключ даёт ошибку компиляции"
+      ],
+      "explanation": "Это классическая задача на собеседовании: «типизируйте функцию get(obj, key)». Без связки `K extends keyof T` и `T[K]` результат был бы `any` или union всех значений.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "number"
+        ],
+        "distractors": [
+          "string | number",
+          "any",
+          "\"age\""
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/generics.html#using-type-parameters-in-generic-constraints"
+      ]
+    },
+    {
+      "id": "typescript-013",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "utility-types"
+      ],
+      "prompt": "Какие utility types вы знаете? Что они делают?",
+      "answer": "Самые используемые:\n- `Partial<T>` — все свойства необязательные (форма редактирования, patch-запрос);\n- `Required<T>` — все обязательные;\n- `Readonly<T>` — все только для чтения;\n- `Pick<T, 'a' | 'b'>` — взять выбранные свойства;\n- `Omit<T, 'password'>` — все, кроме выбранных;\n- `Record<K, V>` — объект с ключами `K` и значениями `V` (словари, маппинги);\n- `ReturnType<F>`, `Parameters<F>` — тип результата и аргументов функции;\n- `Awaited<T>` — тип, который вернёт `await`;\n- `Exclude<U, X>`, `Extract<U, X>`, `NonNullable<T>` — для union.\n\nВсе они построены на mapped и conditional types.",
+      "keyPoints": [
+        "Partial, Required, Readonly — меняют модификаторы всех свойств",
+        "Pick и Omit — выбрать или исключить свойства",
+        "Record<K, V> — объект-словарь",
+        "ReturnType, Parameters, Awaited, Exclude, Extract, NonNullable"
+      ],
+      "explanation": "На собеседовании хорошо не только перечислить, но и дать пример: `Omit<User, 'password'>` для ответа API, `Partial<User>` для формы редактирования.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Omit<User, 'password'> — тип User без поля password",
+          "Partial<User> — все поля User становятся необязательными",
+          "Record<'ru' | 'en', string> — объект с ключами ru и en со строковыми значениями"
+        ],
+        "distractors": [
+          "Pick<User, 'id'> — тип User без поля id",
+          "Readonly<User> — запрещает изменять объект в рантайме",
+          "Required<User> — удаляет все необязательные поля"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/utility-types.html"
+      ]
+    },
+    {
+      "id": "typescript-014",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "utility-types",
+        "union"
+      ],
+      "prompt": "Какой тип получится в каждом случае?",
+      "code": {
+        "lang": "ts",
+        "source": "type Status = 'idle' | 'loading' | 'done';\n\nasync function fn() {\n  return 42;\n}"
+      },
+      "answer": "- `Exclude<Status, 'idle'>` — убирает из union подходящие члены: `\"loading\" | \"done\"`.\n- `Extract<Status, 'idle' | 'other'>` — оставляет только пересечение: `\"idle\"`.\n- `NonNullable<string | null | undefined>` — `string`.\n- `ReturnType<typeof fn>` для `async`-функции — `Promise<number>`, а `Awaited<ReturnType<typeof fn>>` — `number`.\n\n`ReturnType` принимает тип функции, поэтому нужен `typeof fn`, а не `fn`.",
+      "keyPoints": [
+        "Exclude убирает из union подходящие члены",
+        "Extract оставляет только подходящие члены",
+        "NonNullable убирает null и undefined",
+        "ReturnType async-функции — Promise<T>, Awaited разворачивает его"
+      ],
+      "explanation": "Частая ошибка — написать `ReturnType<fn>`: `fn` — значение, а утилите нужен тип, то есть `typeof fn`.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Exclude<Status, 'idle'> — это 'loading' | 'done'",
+          "isTrue": true
+        },
+        {
+          "text": "Extract<Status, 'idle' | 'other'> — это 'idle' | 'other'",
+          "isTrue": false
+        },
+        {
+          "text": "ReturnType<typeof fn> — это number",
+          "isTrue": false
+        },
+        {
+          "text": "Awaited<ReturnType<typeof fn>> — это number",
+          "isTrue": true
+        }
+      ],
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/utility-types.html#excludeuniontype-excludedmembers"
+      ]
+    },
+    {
+      "id": "typescript-015",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "keyof",
+        "typeof",
+        "indexed-access"
+      ],
+      "prompt": "Как работают keyof, typeof и indexed access types? Какой тип у Role?",
+      "code": {
+        "lang": "ts",
+        "source": "const ROLES = ['admin', 'editor', 'viewer'] as const;\ntype Role = (typeof ROLES)[number];"
+      },
+      "answer": "- `typeof value` в позиции типа — берёт тип из существующего значения (переменной, объекта, функции).\n- `keyof T` — union ключей типа: `keyof { a: 1; b: 2 }` → `\"a\" | \"b\"`.\n- `T[K]` — тип свойства по ключу; `T[number]` — тип элемента массива или кортежа.\n\nВ примере `ROLES` объявлен с `as const`, поэтому `typeof ROLES` — `readonly [\"admin\", \"editor\", \"viewer\"]`, а `[number]` даёт union элементов. Так из одного массива получают и список для рантайма (выпадающий список), и тип.",
+      "keyPoints": [
+        "typeof в позиции типа берёт тип из значения",
+        "keyof T — union ключей типа",
+        "T[K] — тип свойства, T[number] — тип элементов массива",
+        "Массив as const + typeof ARR[number] = union литералов"
+      ],
+      "explanation": "Без `as const` результат был бы `string`: массив изменяемый, и литералы расширились бы.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "\"admin\" | \"editor\" | \"viewer\""
+        ],
+        "distractors": [
+          "string",
+          "number",
+          "readonly string[]"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/indexed-access-types.html"
+      ]
+    },
+    {
+      "id": "typescript-016",
+      "level": 4,
+      "difficulty": "senior",
+      "tags": [
+        "conditional-types",
+        "infer"
+      ],
+      "prompt": "Что такое conditional types и infer? Какой тип у A и B?",
+      "code": {
+        "lang": "ts",
+        "source": "type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;\n\ntype A = UnwrapPromise<Promise<string>>;\ntype B = UnwrapPromise<number>;"
+      },
+      "answer": "**Conditional type** — `T extends U ? X : Y`: тернарный оператор на уровне типов.\n\n**`infer`** внутри условия объявляет переменную типа, которую TS выведет из сопоставления. `T extends Promise<infer R> ? R : T` — «если T — промис, достань тип его значения».\n\nВ примере `UnwrapPromise<Promise<string>>` → `string`, а `UnwrapPromise<number>` → `number` (ветка «иначе»). Так устроены встроенные `ReturnType`, `Parameters`, `Awaited`.\n\nНюанс: если `T` — голый параметр-union, условие применяется к каждому члену отдельно (distributive conditional types).",
+      "keyPoints": [
+        "T extends U ? X : Y — условие на уровне типов",
+        "infer выводит часть типа при сопоставлении",
+        "Так реализованы ReturnType, Parameters, Awaited",
+        "Для union условие распределяется по каждому члену"
+      ],
+      "explanation": "Пример distributive-поведения: `ToArray<string | number>` при `type ToArray<T> = T extends any ? T[] : never` даст `string[] | number[]`, а не `(string | number)[]`.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "A — string, B — number"
+        ],
+        "distractors": [
+          "A — Promise<string>, B — never",
+          "A — string, B — never",
+          "A — infer R, B — number"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/conditional-types.html"
+      ]
+    },
+    {
+      "id": "typescript-017",
+      "level": 4,
+      "difficulty": "senior",
+      "tags": [
+        "mapped-types"
+      ],
+      "prompt": "Что такое mapped types? Как написать свой Partial?",
+      "code": {
+        "lang": "ts",
+        "source": "type MyPartial<T> = /* ? */;"
+      },
+      "answer": "Mapped type проходит по ключам другого типа и строит новый тип: `{ [K in keyof T]: ... }`.\n\nМодификаторы: `?` и `readonly` добавляются, а `-?` и `-readonly` — удаляются. Ключи можно переименовать через `as` (key remapping), например добавить префикс `get` к каждому ключу.\n\n```ts\ntype MyPartial<T> = { [K in keyof T]?: T[K] };\ntype MyRequired<T> = { [K in keyof T]-?: T[K] };\n```\n\nНа mapped types построены `Partial`, `Readonly`, `Record`, `Pick`.",
+      "keyPoints": [
+        "Mapped type перебирает ключи: [K in keyof T]",
+        "Модификаторы ? и readonly можно добавлять и снимать через -",
+        "Ключи можно переименовывать через as",
+        "На них построены Partial, Readonly, Record, Pick"
+      ],
+      "explanation": "Классическая задача на собеседовании — написать `MyPartial`, `MyReadonly` или `DeepPartial`. Для глубокой версии значение рекурсивно оборачивают: `T[K] extends object ? DeepPartial<T[K]> : T[K]`.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "{ [K in keyof T]?: T[K] }"
+        ],
+        "distractors": [
+          "{ [K in T]?: K }",
+          "{ [K keyof T]: T[K] | undefined }",
+          "T extends object ? Partial : T"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/2/mapped-types.html"
+      ]
+    },
+    {
+      "id": "typescript-018",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "satisfies",
+        "as",
+        "annotations"
+      ],
+      "prompt": "Чем отличаются аннотация типа, as и satisfies?",
+      "answer": "- **Аннотация** `const x: T = value` — проверяет значение и **расширяет** тип переменной до `T`: конкретные литералы теряются.\n- **`as T`** (type assertion) — говорит компилятору «поверь мне». Проверки почти нет, можно соврать: `{} as User` скомпилируется. Это потенциальный источник багов.\n- **`satisfies T`** (TS 4.9) — **проверяет**, что значение подходит под `T`, но **сохраняет** выведенный, более точный тип.\n\nПример: `const routes = { home: '/', user: '/user' } satisfies Record<string, string>` — опечатка в значении будет поймана, а `routes.home` останется известным ключом с автодополнением.",
+      "keyPoints": [
+        "Аннотация проверяет и расширяет тип до объявленного",
+        "as — утверждение без реальной проверки, можно соврать компилятору",
+        "satisfies проверяет соответствие и сохраняет точный выведенный тип",
+        "satisfies удобен для конфигов и словарей"
+      ],
+      "explanation": "Правило: `as` — последнее средство (и почти всегда признак, что тип можно описать лучше), `satisfies` — когда нужна проверка без потери точности.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "satisfies проверяет значение на соответствие типу и сохраняет более точный выведенный тип"
+        ],
+        "distractors": [
+          "satisfies — то же, что as, но с новым синтаксисом",
+          "satisfies проверяет тип во время выполнения",
+          "satisfies расширяет тип переменной до указанного, как аннотация"
+        ]
+      },
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html#the-satisfies-operator"
+      ]
+    },
+    {
+      "id": "typescript-019",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "structural-typing"
+      ],
+      "prompt": "Что такое структурная типизация в TypeScript?",
+      "answer": "TypeScript сравнивает типы **по структуре**, а не по имени (в отличие от номинальной типизации в Java или C#). Если у значения есть все требуемые свойства нужных типов, оно совместимо — даже если объявлено под другим именем или имеет лишние свойства («утиная типизация»).\n\nИсключение — **excess property check**: при передаче **объектного литерала** напрямую лишние свойства дают ошибку, чтобы ловить опечатки. Если тот же объект сначала положить в переменную, ошибки не будет.\n\nДля «номинальных» типов (например, чтобы не перепутать `UserId` и `OrderId`) используют branded types: `type UserId = string & { __brand: 'UserId' }`.",
+      "keyPoints": [
+        "Совместимость типов определяется структурой, а не именем",
+        "Объект с лишними свойствами совместим с типом",
+        "Excess property check срабатывает только для объектного литерала",
+        "Branded types — способ получить номинальное поведение"
+      ],
+      "explanation": "Почему так: TS описывает существующий JS, где объекты создаются «на лету» и никаких имён классов у них нет.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Два разных interface с одинаковыми свойствами совместимы между собой",
+          "isTrue": true
+        },
+        {
+          "text": "Объектный литерал с лишним свойством, переданный напрямую в функцию, вызывает ошибку",
+          "isTrue": true
+        },
+        {
+          "text": "Тот же объект с лишним свойством, сначала сохранённый в переменную, тоже вызывает ошибку",
+          "isTrue": false
+        },
+        {
+          "text": "TypeScript сравнивает типы по имени, как Java",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://www.typescriptlang.org/docs/handbook/type-compatibility.html"
+      ]
+    },
+    {
+      "id": "typescript-020",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "react",
+        "practice"
+      ],
+      "prompt": "Как типизировать React-компоненты: пропсы, события, состояние, children?",
+      "answer": "- **Пропсы** — `type ButtonProps = { variant: 'primary' | 'ghost'; onClick?: () => void }` и `function Button({ variant }: ButtonProps)`. `React.FC` сейчас не обязателен.\n- **Расширение нативных атрибутов** — `React.ComponentProps<'button'>` или `ButtonHTMLAttributes<HTMLButtonElement>`.\n- **children** — `React.ReactNode`.\n- **События** — `React.ChangeEvent<HTMLInputElement>`, `React.MouseEvent<HTMLButtonElement>`; в инлайн-обработчике тип выводится сам.\n- **useState** — выводится из начального значения; для `null` нужен дженерик: `useState<User | null>(null)`.\n- **useRef для DOM** — `useRef<HTMLInputElement>(null)`.\n- Взаимоисключающие пропсы описывают через discriminated union.",
+      "keyPoints": [
+        "Пропсы описываются type/interface, React.FC не обязателен",
+        "children — React.ReactNode; нативные атрибуты — ComponentProps<'button'>",
+        "События — React.ChangeEvent<HTMLInputElement> и подобные",
+        "useState<User | null>(null) и useRef<HTMLInputElement>(null)"
+      ],
+      "explanation": "Типичная ошибка: `useState(null)` без дженерика — состояние навсегда получает тип `null`, и `setUser(user)` не скомпилируется.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "useState<User | null>(null) — для состояния, которое изначально пустое",
+          "React.ReactNode — тип для children",
+          "React.ChangeEvent<HTMLInputElement> — событие onChange у input"
+        ],
+        "distractors": [
+          "useState(null) — TypeScript сам поймёт, что позже там будет User",
+          "children всегда имеет тип string",
+          "Все компоненты обязаны быть объявлены через React.FC"
+        ]
+      },
+      "sources": [
+        "https://react.dev/learn/typescript"
+      ]
+    }
+  ]
+}

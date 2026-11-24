@@ -1,0 +1,777 @@
+{
+  "topic": "nodejs",
+  "questions": [
+    {
+      "id": "nodejs-001",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "basics"
+      ],
+      "prompt": "Что такое Node.js? Для каких задач он подходит, а для каких — нет?",
+      "answer": "Node.js — среда выполнения JavaScript вне браузера: движок **V8** (компилирует JS в машинный код) плюс библиотека **libuv** (event loop, асинхронный ввод-вывод, пул потоков) и стандартные модули (`fs`, `http`, `crypto`, `stream`).\n\nСильные стороны: неблокирующий ввод-вывод — один процесс держит тысячи одновременных соединений; один язык на фронте и бэке; огромная экосистема npm.\n\nПодходит: REST/GraphQL API, BFF для фронтенда, real-time (чаты, WebSocket), стриминг, прокси, CLI-инструменты, SSR.\n\nНе подходит без дополнительных мер: **CPU-тяжёлые задачи** (обработка видео, сложные вычисления, ML) — они блокируют event loop. Их выносят в `worker_threads`, отдельные сервисы или очереди.\n\nВ продакшене используют только LTS-версии.",
+      "keyPoints": [
+        "Среда выполнения JS: V8 + libuv + стандартные модули",
+        "Неблокирующий ввод-вывод — тысячи соединений в одном процессе",
+        "Подходит для API, BFF, real-time, стриминга, SSR",
+        "CPU-тяжёлые задачи блокируют event loop — их выносят в воркеры или сервисы"
+      ],
+      "explanation": "Сильный ответ называет главное ограничение: Node хорош там, где много ожидания (сеть, база, диск), и плох там, где много вычислений в основном потоке.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "API с большим числом одновременных запросов к базе и внешним сервисам"
+        ],
+        "distractors": [
+          "Перекодирование видео прямо в основном потоке HTTP-сервера",
+          "Node.js подходит только для фронтенда",
+          "Сложные математические расчёты в обработчике запроса без воркеров"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs"
+      ]
+    },
+    {
+      "id": "nodejs-002",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "event-loop",
+        "libuv",
+        "thread-pool"
+      ],
+      "prompt": "Node.js однопоточный? Как он обрабатывает много запросов одновременно?",
+      "answer": "**JavaScript-код** выполняется в одном потоке — главном. Но сам Node.js не однопоточный.\n\n- Сетевой ввод-вывод (сокеты, HTTP) libuv делает через механизмы ОС (epoll, kqueue, IOCP): ожидание не занимает поток.\n- Операции, которые в ОС нельзя сделать асинхронно, выполняются в **пуле потоков libuv** (по умолчанию 4 потока, `UV_THREADPOOL_SIZE`): файловая система, `dns.lookup`, часть `crypto` (`pbkdf2`, `scrypt`), `zlib`.\n- Когда операция завершается, её колбэк попадает в очередь, и **event loop** выполняет его в главном потоке.\n\nПоэтому один процесс обслуживает тысячи запросов, пока каждый обработчик быстро отдаёт управление. Для параллельных вычислений есть `worker_threads`, для нескольких ядер — `cluster` или несколько процессов.",
+      "keyPoints": [
+        "JS выполняется в одном главном потоке",
+        "Сеть — через неблокирующие механизмы ОС, без отдельного потока на запрос",
+        "fs, dns.lookup, часть crypto и zlib — в пуле потоков libuv (по умолчанию 4)",
+        "Колбэки завершённых операций выполняет event loop в главном потоке"
+      ],
+      "explanation": "Частая ошибка — сказать, что сетевые запросы выполняются в пуле потоков. Пул нужен для файлов, DNS и тяжёлой криптографии, а сеть асинхронна на уровне ОС.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "JavaScript-код приложения выполняется в одном главном потоке",
+          "Операции файловой системы выполняются в пуле потоков libuv",
+          "Размер пула потоков по умолчанию — 4, его меняют через UV_THREADPOOL_SIZE"
+        ],
+        "distractors": [
+          "Node.js создаёт отдельный поток на каждый HTTP-запрос",
+          "Каждый сетевой запрос занимает поток из пула libuv",
+          "Node.js полностью однопоточный, включая операции с диском"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop"
+      ]
+    },
+    {
+      "id": "nodejs-003",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "event-loop",
+        "phases"
+      ],
+      "prompt": "Из каких фаз состоит event loop в Node.js? Расставьте их по порядку.",
+      "answer": "Один оборот event loop проходит фазы:\n\n1. **timers** — колбэки `setTimeout` и `setInterval`, время которых наступило;\n2. **pending callbacks** — отложенные системные колбэки (например, некоторые ошибки TCP);\n3. **poll** — получение новых событий ввода-вывода и выполнение их колбэков; если делать нечего, цикл может ждать здесь;\n4. **check** — колбэки `setImmediate`;\n5. **close callbacks** — события закрытия (`socket.on('close')`).\n\nМежду операциями (после каждого колбэка) Node опустошает очереди `process.nextTick` и микрозадач (промисы). Внутренние фазы idle/prepare используются самим Node и обычно не упоминаются.",
+      "keyPoints": [
+        "timers — setTimeout и setInterval",
+        "poll — новые события ввода-вывода и их колбэки",
+        "check — setImmediate, close callbacks — события закрытия",
+        "После каждого колбэка выполняются nextTick и микрозадачи"
+      ],
+      "explanation": "Отличие от браузера: в браузере нет фаз poll и check, нет setImmediate и process.nextTick, зато есть рендеринг и requestAnimationFrame.",
+      "formats": [
+        "ordering",
+        "open_text",
+        "open_voice"
+      ],
+      "ordering": [
+        "timers (setTimeout, setInterval)",
+        "pending callbacks",
+        "poll (события ввода-вывода)",
+        "check (setImmediate)",
+        "close callbacks"
+      ],
+      "sources": [
+        "https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick"
+      ]
+    },
+    {
+      "id": "nodejs-004",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "event-loop",
+        "nextTick",
+        "setImmediate"
+      ],
+      "prompt": "Что выведет код? Чем отличаются process.nextTick, промисы, setTimeout и setImmediate?",
+      "code": {
+        "lang": "js",
+        "source": "const fs = require('node:fs');\n\nfs.readFile(__filename, () => {\n  console.log('start');\n  setTimeout(() => console.log('timeout'), 0);\n  setImmediate(() => console.log('immediate'));\n  Promise.resolve().then(() => console.log('promise'));\n  process.nextTick(() => console.log('nextTick'));\n  console.log('end');\n});"
+      },
+      "answer": "Вывод: `start end nextTick promise immediate timeout`.\n\n1. Синхронный код: `start`, `end`.\n2. Очередь `process.nextTick` выполняется раньше промисов: `nextTick`.\n3. Затем микрозадачи (промисы): `promise`.\n4. Код выполняется внутри колбэка ввода-вывода (фаза poll). Следующая фаза — **check**, поэтому `setImmediate` срабатывает раньше, чем таймер в следующем обороте: `immediate`, `timeout`.\n\nВажно: в главном модуле (не внутри I/O-колбэка) порядок `setTimeout(0)` и `setImmediate` **не гарантирован** — зависит от того, сколько прошло времени при старте цикла.",
+      "keyPoints": [
+        "Сначала синхронный код",
+        "process.nextTick выполняется раньше промисов",
+        "Внутри I/O-колбэка setImmediate (check) раньше setTimeout (timers)",
+        "В главном модуле порядок setTimeout(0) и setImmediate не гарантирован"
+      ],
+      "explanation": "Злоупотреблять `process.nextTick` опасно: рекурсивные вызовы не дадут event loop перейти к вводу-выводу. Для «сразу после текущего» обычно достаточно `queueMicrotask` или `setImmediate`.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "start end nextTick promise immediate timeout",
+        "distractors": [
+          "start end promise nextTick timeout immediate",
+          "start end nextTick promise timeout immediate",
+          "start nextTick promise end immediate timeout"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/en/learn/asynchronous-work/understanding-processnexttick"
+      ]
+    },
+    {
+      "id": "nodejs-005",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "modules",
+        "esm",
+        "commonjs"
+      ],
+      "prompt": "Как в Node.js работают CommonJS и ES-модули? Как Node понимает, какой формат у файла?",
+      "answer": "Формат определяется так:\n- `.mjs` — всегда ESM, `.cjs` — всегда CommonJS;\n- `.js` — по полю `\"type\"` в ближайшем `package.json`: `\"module\"` → ESM, `\"commonjs\"` или отсутствие → CommonJS (в новых версиях Node также умеет определять ESM по синтаксису).\n\nОтличия в Node:\n- в ESM нет `require`, `__dirname`, `__filename` — вместо них `import.meta.dirname`, `import.meta.filename`, `import.meta.url`;\n- в ESM есть top-level `await`, импорты статические;\n- ESM может импортировать CommonJS;\n- `require()` ES-модуля без top-level `await` работает без флагов в Node 22.12+ и 20.19+ (раньше — только через `import()`).\n\nВстроенные модули лучше импортировать с префиксом `node:` — `import fs from 'node:fs'`.",
+      "keyPoints": [
+        ".mjs — ESM, .cjs — CommonJS, .js — по полю type в package.json",
+        "В ESM нет require и __dirname — есть import.meta.dirname и import.meta.url",
+        "ESM поддерживает top-level await и может импортировать CommonJS",
+        "require(esm) работает без флагов в Node 22.12+ и 20.19+"
+      ],
+      "explanation": "Префикс `node:` явно показывает, что это встроенный модуль, и защищает от пакета в npm с таким же именем.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Файл .mjs всегда загружается как ES-модуль",
+          "isTrue": true
+        },
+        {
+          "text": "В ES-модуле доступна переменная __dirname",
+          "isTrue": false
+        },
+        {
+          "text": "Поле \"type\": \"module\" в package.json делает .js-файлы ES-модулями",
+          "isTrue": true
+        },
+        {
+          "text": "ES-модуль не может импортировать CommonJS-модуль",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://nodejs.org/api/esm.html"
+      ]
+    },
+    {
+      "id": "nodejs-006",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "event-loop",
+        "blocking",
+        "performance"
+      ],
+      "prompt": "Какой код блокирует event loop? Как этого избежать?",
+      "answer": "Event loop блокирует всё, что долго выполняется в главном потоке — в это время сервер не отвечает **никому**.\n\nТипичные причины:\n- синхронные API: `fs.readFileSync`, `crypto.pbkdf2Sync`, `zlib.gzipSync` в обработчиках запросов;\n- `JSON.parse` и `JSON.stringify` огромных объектов;\n- тяжёлые циклы и сортировки больших массивов;\n- «катастрофические» регулярные выражения (**ReDoS**) на пользовательском вводе;\n- бесконечная рекурсия `process.nextTick` или промисов.\n\nКак избежать: асинхронные версии API; стримы для больших данных; разбивать работу на части (`setImmediate` между кусками); выносить вычисления в `worker_threads`, очередь задач или отдельный сервис; ограничивать размер входных данных. Мониторинг — метрика задержки event loop (`perf_hooks.monitorEventLoopDelay`).",
+      "keyPoints": [
+        "Долгий синхронный код останавливает обработку всех запросов",
+        "Причины: *Sync-API, JSON огромных объектов, тяжёлые циклы, ReDoS",
+        "Решения: асинхронные API, стримы, разбиение работы, worker_threads",
+        "Мониторинг задержки event loop через perf_hooks"
+      ],
+      "explanation": "Синхронные методы вроде `readFileSync` нормальны при старте приложения (чтение конфига) — проблема только в коде, который выполняется на каждый запрос.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "fs.readFileSync в обработчике каждого HTTP-запроса",
+          "JSON.parse ответа размером 200 МБ",
+          "Регулярное выражение с катастрофическим перебором на пользовательском вводе"
+        ],
+        "distractors": [
+          "await fetch() к внешнему API",
+          "fs.promises.readFile небольшого файла",
+          "setTimeout на 5 секунд"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop"
+      ]
+    },
+    {
+      "id": "nodejs-007",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "timers",
+        "blocking"
+      ],
+      "prompt": "Гарантирует ли setTimeout(fn, 100) вызов ровно через 100 мс? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "const start = Date.now();\n\nsetTimeout(() => {\n  console.log(Date.now() - start >= 1000 ? 'late' : 'ontime');\n}, 100);\n\nwhile (Date.now() - start < 1000) {}"
+      },
+      "answer": "Вывод: `late`.\n\n`setTimeout(fn, 100)` гарантирует только **минимальную** задержку: колбэк не выполнится раньше чем через 100 мс, но может позже. Таймер срабатывает в фазе timers, а туда event loop попадёт, только когда главный поток освободится.\n\nЗдесь синхронный цикл занимает поток на 1 секунду, поэтому колбэк выполнится примерно через 1000 мс.\n\nНа точность также влияют: другие колбэки в очереди, нагрузка на CPU, сборка мусора. Для точного планирования (cron, напоминания) используют планировщики и очереди, а не длинные `setTimeout`.",
+      "keyPoints": [
+        "setTimeout гарантирует минимальную задержку, а не точное время",
+        "Колбэк выполнится, только когда главный поток освободится",
+        "Синхронный код задерживает все таймеры",
+        "Для точного планирования — планировщики и очереди задач"
+      ],
+      "explanation": "Этот вопрос из DOU-списка проверяет то же, что и вопросы про блокировку: понимаете ли вы, что всё в Node зависит от свободного главного потока.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "late",
+        "distractors": [
+          "ontime",
+          "Колбэк не выполнится никогда",
+          "Ошибка: таймер отменён циклом"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/api/timers.html"
+      ]
+    },
+    {
+      "id": "nodejs-008",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "errors",
+        "async"
+      ],
+      "prompt": "Как обрабатывать ошибки в Node.js? Чем операционные ошибки отличаются от ошибок программиста?",
+      "answer": "**Операционные ошибки** — ожидаемые сбои среды: нет файла, таймаут, база недоступна, невалидный ввод. Их обрабатывают: повтор, запасной вариант, понятный ответ клиенту (4xx/5xx).\n\n**Ошибки программиста** — баги: `undefined is not a function`, неверные аргументы. Их не «глотают», а исправляют; состояние процесса после них может быть испорчено.\n\nПрактика:\n- `async/await` + `try/catch`; в Express 5 ошибки из async-обработчиков попадают в error middleware автоматически;\n- всегда обрабатывать событие `error` у стримов и EventEmitter — иначе процесс упадёт;\n- `process.on('unhandledRejection')` и `uncaughtException` — для логирования и **корректного завершения**, а не для продолжения работы. С Node 15 необработанный отклонённый промис по умолчанию завершает процесс;\n- менеджер процессов или оркестратор (Docker, Kubernetes, PM2) перезапускает упавший процесс.",
+      "keyPoints": [
+        "Операционные ошибки — ожидаемые сбои среды, их обрабатывают",
+        "Ошибки программиста — баги, их исправляют, а не глотают",
+        "try/catch в async-коде, обработка события error у стримов и EventEmitter",
+        "uncaughtException/unhandledRejection — логировать и завершиться; процесс перезапускает оркестратор"
+      ],
+      "explanation": "После `uncaughtException` продолжать работу опасно: неизвестно, какие соединения и данные остались в полуготовом состоянии.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "С Node 15 необработанный отклонённый промис по умолчанию завершает процесс",
+          "isTrue": true
+        },
+        {
+          "text": "После uncaughtException лучше продолжать обслуживать запросы, как будто ничего не случилось",
+          "isTrue": false
+        },
+        {
+          "text": "Если у EventEmitter нет обработчика события 'error', при emit('error') процесс упадёт",
+          "isTrue": true
+        },
+        {
+          "text": "Таймаут запроса к базе — это ошибка программиста",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://nodejs.org/api/errors.html"
+      ]
+    },
+    {
+      "id": "nodejs-009",
+      "level": 2,
+      "difficulty": "junior",
+      "tags": [
+        "events",
+        "EventEmitter"
+      ],
+      "prompt": "Что такое EventEmitter? Что выведет код?",
+      "code": {
+        "lang": "js",
+        "source": "const { EventEmitter } = require('node:events');\n\nconst emitter = new EventEmitter();\nemitter.on('ready', () => console.log('A'));\n\nconsole.log('B');\nemitter.emit('ready');\nconsole.log('C');"
+      },
+      "answer": "Вывод: `B A C`.\n\n`EventEmitter` — базовый класс для паттерна «издатель — подписчик»: `on`/`once` подписывают обработчик, `emit` генерирует событие, `off` отписывает. На нём построены стримы, `http.Server`, сокеты, `process`.\n\nВажно: `emit` вызывает обработчики **синхронно**, по порядку подписки. Поэтому `A` выводится сразу внутри `emit`, до `C`. Асинхронность появляется, только если сам обработчик что-то откладывает.\n\nДругие детали: событие `error` без обработчика роняет процесс; больше 10 обработчиков одного события дают предупреждение о возможной утечке памяти.",
+      "keyPoints": [
+        "EventEmitter — паттерн издатель-подписчик: on, once, emit, off",
+        "На нём построены стримы, http.Server, сокеты, process",
+        "emit вызывает обработчики синхронно, по порядку подписки",
+        "Событие error без обработчика роняет процесс"
+      ],
+      "explanation": "Предупреждение `MaxListenersExceededWarning` часто означает реальную утечку: подписка в обработчике запроса без отписки.",
+      "formats": [
+        "code_output",
+        "open_text",
+        "open_voice"
+      ],
+      "codeOutput": {
+        "answer": "B A C",
+        "distractors": [
+          "B C A",
+          "A B C",
+          "B C"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/api/events.html"
+      ]
+    },
+    {
+      "id": "nodejs-010",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "AbortController",
+        "timeouts"
+      ],
+      "prompt": "Как отменять асинхронные операции и задавать таймауты в Node.js?",
+      "answer": "Стандартный механизм — **`AbortController`** и `AbortSignal`:\n\n```js\nconst res = await fetch(url, { signal: AbortSignal.timeout(5000) });\n```\n\n- `controller.abort()` отменяет все операции, которым передан `controller.signal`;\n- `AbortSignal.timeout(ms)` — сигнал, который сам отменит операцию через заданное время;\n- `AbortSignal.any([s1, s2])` — объединение сигналов (например, таймаут или отключение клиента).\n\nСигнал принимают: `fetch`, `fs.promises.readFile`, `setTimeout` из `node:timers/promises`, `events.once`, `child_process`, `stream.pipeline`, многие драйверы баз данных.\n\nЗачем: внешний API завис — без таймаута запрос висит бесконечно и держит ресурсы; клиент закрыл соединение — дорогую работу стоит прервать.",
+      "keyPoints": [
+        "AbortController и AbortSignal — стандартный механизм отмены",
+        "AbortSignal.timeout(ms) — таймаут, AbortSignal.any — объединение сигналов",
+        "Сигнал принимают fetch, fs.promises, timers/promises, pipeline и другие",
+        "Без таймаутов зависший внешний сервис держит ресурсы сервера"
+      ],
+      "explanation": "У встроенного `fetch` нет таймаута по умолчанию — это частая причина «висящих» запросов в продакшене.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "fetch(url, { signal: AbortSignal.timeout(5000) })"
+        ],
+        "distractors": [
+          "fetch(url, { timeout: 5000 }) — встроенная опция fetch",
+          "Promise.race без отмены — запрос будет остановлен автоматически",
+          "process.exit() через 5 секунд"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/api/globals.html#class-abortcontroller"
+      ]
+    },
+    {
+      "id": "nodejs-011",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "streams"
+      ],
+      "prompt": "Что такое стримы? Какие типы стримов есть в Node.js?",
+      "answer": "Стрим — обработка данных **по частям** (чанками) по мере поступления, а не целиком в памяти. Память остаётся постоянной, независимо от размера данных, и обработка начинается сразу.\n\nТипы:\n- **Readable** — источник: `fs.createReadStream`, тело HTTP-запроса, `process.stdin`;\n- **Writable** — приёмник: `fs.createWriteStream`, HTTP-ответ, `process.stdout`;\n- **Duplex** — и чтение, и запись независимо: TCP-сокет;\n- **Transform** — Duplex, который преобразует данные: `zlib.createGzip()`, шифрование, парсинг CSV.\n\nОсновные события: `data`, `end` (Readable), `finish` (Writable), `error`, `close`. Readable-стримы можно перебирать через `for await...of`.",
+      "keyPoints": [
+        "Стрим обрабатывает данные чанками, не загружая всё в память",
+        "Readable — источник, Writable — приёмник",
+        "Duplex — чтение и запись (сокет), Transform — преобразование (gzip)",
+        "События data, end, finish, error; Readable поддерживает for await...of"
+      ],
+      "explanation": "Пример для ответа: отдать файл на 2 ГБ клиенту через стрим — память сервера почти не растёт; через `readFile` — 2 ГБ в памяти на каждый запрос.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "zlib.createGzip() — Transform-стрим",
+          "HTTP-ответ сервера (res) — Writable-стрим",
+          "TCP-сокет — Duplex-стрим"
+        ],
+        "distractors": [
+          "fs.readFile — Readable-стрим",
+          "Transform-стрим может только читать данные",
+          "Стрим всегда загружает весь файл в память перед обработкой"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/api/stream.html"
+      ]
+    },
+    {
+      "id": "nodejs-012",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "fs",
+        "streams",
+        "large-files"
+      ],
+      "prompt": "Как прочитать и обработать лог-файл на 5 ГБ, не упав по памяти?",
+      "answer": "`fs.readFile` загрузит весь файл в память — на больших файлах это ошибка памяти или превышение лимита размера буфера.\n\nПравильно читать стримом построчно:\n\n```js\nconst rl = readline.createInterface({\n  input: fs.createReadStream('app.log'),\n  crlfDelay: Infinity,\n});\nfor await (const line of rl) {\n  if (line.includes('ERROR')) errors++;\n}\n```\n\nПамять остаётся постоянной (размер чанка, по умолчанию 64 КБ), обработка начинается сразу. Для преобразования с записью — цепочка стримов через `pipeline`. Синхронные методы (`readFileSync`) в обработчиках запросов недопустимы: они блокируют event loop.",
+      "keyPoints": [
+        "readFile загружает весь файл в память — не подходит для больших файлов",
+        "fs.createReadStream читает чанками, память постоянная",
+        "readline + for await...of — построчная обработка",
+        "Для преобразования с записью — pipeline; *Sync-методы блокируют event loop"
+      ],
+      "explanation": "Этот вопрос почти дословно есть в DOU-списке для Middle: «прочитать файл логов больше 300 МБ».",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "fs.createReadStream + readline и обработка строк в for await...of"
+        ],
+        "distractors": [
+          "fs.readFileSync, затем split('\\n')",
+          "fs.readFile с увеличенным лимитом памяти через --max-old-space-size",
+          "require('./app.log')"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/api/readline.html#example-read-file-stream-line-by-line"
+      ]
+    },
+    {
+      "id": "nodejs-013",
+      "level": 3,
+      "difficulty": "senior",
+      "tags": [
+        "streams",
+        "backpressure"
+      ],
+      "prompt": "Что такое backpressure в стримах и как с ним работать?",
+      "answer": "**Backpressure** — ситуация, когда источник выдаёт данные быстрее, чем приёмник успевает их обработать (быстрое чтение с диска → медленная сеть). Если игнорировать, данные копятся во внутреннем буфере, и память растёт без ограничений.\n\nМеханизм:\n- `writable.write(chunk)` возвращает `false`, когда буфер превысил `highWaterMark`;\n- нужно **остановить запись** и дождаться события `drain`, затем продолжить;\n- `pipe()` и `pipeline()` делают это автоматически: ставят Readable на паузу и возобновляют.\n\nОшибка — вызывать `write()` в цикле, не проверяя результат. Решение — использовать `pipeline`, `for await` с `await once(writable, 'drain')` или свой Transform-стрим.",
+      "keyPoints": [
+        "Backpressure — источник быстрее приёмника, буфер растёт",
+        "write() возвращает false, когда буфер превысил highWaterMark",
+        "Нужно ждать события drain перед продолжением записи",
+        "pipe и pipeline управляют backpressure автоматически"
+      ],
+      "explanation": "Если на собеседовании просят «скопировать файл стримами вручную», правильный ответ проверяет результат `write()` и ждёт `drain`.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "write() возвращает false, когда внутренний буфер Writable заполнен",
+          "isTrue": true
+        },
+        {
+          "text": "pipeline автоматически ставит источник на паузу при переполнении приёмника",
+          "isTrue": true
+        },
+        {
+          "text": "Если write() вернул false, данные потеряны",
+          "isTrue": false
+        },
+        {
+          "text": "Игнорирование backpressure может привести к неограниченному росту памяти",
+          "isTrue": true
+        }
+      ],
+      "sources": [
+        "https://nodejs.org/en/learn/modules/backpressuring-in-streams"
+      ]
+    },
+    {
+      "id": "nodejs-014",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "streams",
+        "pipeline"
+      ],
+      "prompt": "Чем pipeline отличается от pipe? Что лучше использовать?",
+      "answer": "`readable.pipe(writable)` соединяет стримы и управляет backpressure, но:\n- **не передаёт ошибки** по цепочке — у каждого стрима нужен свой обработчик `error`;\n- при ошибке в середине цепочки остальные стримы **не закрываются** — утечка дескрипторов и памяти.\n\n`stream.pipeline(...streams, callback)` или промис-версия из `node:stream/promises`:\n- собирает ошибки любого стрима в одно место;\n- **уничтожает все стримы** цепочки при ошибке или завершении;\n- поддерживает `AbortSignal` и асинхронные генераторы как шаги.\n\n```js\nawait pipeline(\n  fs.createReadStream('in.log'),\n  zlib.createGzip(),\n  fs.createWriteStream('in.log.gz'),\n);\n```\n\nВ современном коде используйте `pipeline`.",
+      "keyPoints": [
+        "pipe управляет backpressure, но не передаёт ошибки",
+        "pipe не закрывает остальные стримы при ошибке — утечки",
+        "pipeline собирает ошибки и уничтожает все стримы цепочки",
+        "Промис-версия из node:stream/promises, поддержка AbortSignal и генераторов"
+      ],
+      "explanation": "`PassThrough` — Transform без преобразования: полезен, чтобы «подсмотреть» данные (подсчёт байт) или отдать стрим, который будет наполнен позже.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "pipeline передаёт ошибки в одно место и закрывает все стримы цепочки"
+        ],
+        "distractors": [
+          "pipe и pipeline полностью одинаковы",
+          "pipeline не поддерживает backpressure",
+          "pipe автоматически закрывает все стримы при ошибке в любом из них"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/api/stream.html#streampipelinesource-transforms-destination-callback"
+      ]
+    },
+    {
+      "id": "nodejs-015",
+      "level": 3,
+      "difficulty": "junior",
+      "tags": [
+        "buffer",
+        "binary"
+      ],
+      "prompt": "Что такое Buffer и зачем он нужен?",
+      "answer": "`Buffer` — последовательность байтов фиксированной длины для работы с **двоичными данными**: файлы, изображения, сетевые пакеты, криптография. Это подкласс `Uint8Array`, память выделяется вне кучи V8.\n\n- Создание: `Buffer.from('привет', 'utf8')`, `Buffer.alloc(10)` (заполнен нулями);\n- `Buffer.allocUnsafe(size)` быстрее, но содержит «мусор» из памяти — его нужно сразу заполнить, иначе можно отдать чужие данные;\n- преобразование: `buf.toString('utf8' | 'base64' | 'hex')`;\n- длина в **байтах**, а не символах: `Buffer.from('привет').length === 12` (кириллица в UTF-8 — 2 байта на символ).\n\nЧанки стримов по умолчанию — это Buffer.",
+      "keyPoints": [
+        "Buffer — байтовый массив для двоичных данных, подкласс Uint8Array",
+        "Buffer.from и Buffer.alloc; allocUnsafe содержит старые данные памяти",
+        "toString с кодировкой utf8, base64, hex",
+        "length — в байтах, а не в символах"
+      ],
+      "explanation": "Проблема с кодировками на границах чанков: многобайтовый символ может разорваться между двумя чанками — для этого есть `StringDecoder` или `setEncoding` у стрима.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Buffer.from('привет').length равно 6",
+          "isTrue": false
+        },
+        {
+          "text": "Buffer.allocUnsafe может содержать старые данные из памяти",
+          "isTrue": true
+        },
+        {
+          "text": "Buffer — подкласс Uint8Array",
+          "isTrue": true
+        },
+        {
+          "text": "Чанки стримов по умолчанию приходят как строки",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://nodejs.org/api/buffer.html"
+      ]
+    },
+    {
+      "id": "nodejs-016",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "cluster",
+        "worker_threads",
+        "child_process"
+      ],
+      "prompt": "Чем отличаются cluster, worker_threads и child_process? Когда что использовать?",
+      "answer": "- **`cluster`** — несколько **процессов** одного приложения, принимающих соединения на одном порту. Цель — использовать все ядра CPU для I/O-нагрузки. Память не общая. Сегодня чаще используют несколько контейнеров или PM2.\n- **`worker_threads`** — **потоки** внутри одного процесса, у каждого свой event loop и V8-изолят. Для **CPU-тяжёлых вычислений** (обработка изображений, парсинг, шифрование) без блокировки главного потока. Обмен — сообщения, `SharedArrayBuffer` для общей памяти. Обычно используют пул воркеров (например, Piscina).\n- **`child_process`** — запуск **внешних программ** или скриптов (`spawn`, `exec`, `fork`): ffmpeg, git, ImageMagick, Python-скрипт.\n\nПо умолчанию Node.js-приложение использует **одно ядро** для JS-кода.",
+      "keyPoints": [
+        "cluster — несколько процессов на одном порту, для всех ядер CPU",
+        "worker_threads — потоки для CPU-тяжёлых вычислений",
+        "child_process — запуск внешних программ: spawn, exec, fork",
+        "По умолчанию JS-код использует одно ядро"
+      ],
+      "explanation": "`exec` с пользовательским вводом в строке команды — риск инъекции команд. Безопаснее `spawn` или `execFile` с массивом аргументов.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Генерацию превью изображений внутри приложения — в worker_threads",
+          "Запуск ffmpeg для конвертации видео — через child_process",
+          "Использование всех ядер для HTTP-сервера — cluster или несколько процессов"
+        ],
+        "distractors": [
+          "worker_threads нужны, чтобы ускорить запросы к базе данных",
+          "Процессы cluster по умолчанию разделяют общую память",
+          "child_process.exec с пользовательским вводом в строке — безопасный способ"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/api/worker_threads.html"
+      ]
+    },
+    {
+      "id": "nodejs-017",
+      "level": 4,
+      "difficulty": "senior",
+      "tags": [
+        "memory",
+        "gc",
+        "debugging"
+      ],
+      "prompt": "Как найти утечку памяти и разобраться с ошибкой «JavaScript heap out of memory»?",
+      "answer": "**Симптомы:** память процесса (`heapUsed` из `process.memoryUsage()`) растёт и не возвращается после сборки мусора, процесс падает с `heap out of memory` или его убивает оркестратор.\n\n**Частые причины:**\n- кэш в объекте или Map без ограничения размера и TTL;\n- подписки на события без отписки, накопленные таймеры;\n- замыкания, держащие большие объекты (например, весь запрос);\n- глобальные массивы для логов или метрик;\n- загрузка больших файлов целиком вместо стримов.\n\n**Диагностика:** снять несколько heap snapshot (`--inspect` + Chrome DevTools, `v8.writeHeapSnapshot()`, `--heapsnapshot-near-heap-limit`) и сравнить — какие объекты растут и кто их удерживает (retainers). Профилирование под нагрузкой, `clinic.js`.\n\n`--max-old-space-size` увеличивает лимит кучи, но **не лечит** утечку, а только откладывает падение.",
+      "keyPoints": [
+        "Признак — память растёт и не освобождается после сборки мусора",
+        "Причины: неограниченные кэши, подписки без отписки, замыкания, глобальные массивы",
+        "Диагностика: сравнение heap snapshot и поиск retainers",
+        "--max-old-space-size не лечит утечку, а откладывает падение"
+      ],
+      "explanation": "Для кэшей используйте LRU с ограничением размера или внешний кэш (Redis): тогда память процесса не растёт вместе с числом пользователей.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Сравнить несколько heap snapshot и найти объекты, количество которых растёт",
+          "Объект-кэш, в который добавляют данные на каждый запрос и никогда не удаляют",
+          "Подписка emitter.on() внутри обработчика запроса без отписки"
+        ],
+        "distractors": [
+          "Увеличить --max-old-space-size — это решает утечку",
+          "Локальные переменные функции после её завершения",
+          "Использование стримов вместо readFile"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/en/learn/diagnostics/memory/using-heap-snapshot"
+      ]
+    },
+    {
+      "id": "nodejs-018",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "graceful-shutdown",
+        "signals",
+        "production"
+      ],
+      "prompt": "Что такое graceful shutdown? Чем SIGTERM отличается от SIGINT? Расставьте шаги корректного завершения.",
+      "answer": "- **SIGINT** — прерывание от пользователя (Ctrl+C в терминале).\n- **SIGTERM** — «вежливая» просьба завершиться от системы: так останавливают процесс Docker, Kubernetes, PM2, systemd при деплое и масштабировании.\n- **SIGKILL** — немедленное убийство, перехватить нельзя. Kubernetes пошлёт его, если процесс не завершился за `terminationGracePeriodSeconds` (по умолчанию 30 секунд).\n\n**Graceful shutdown** — завершиться, не обрывая работу пользователей:\n1. получить SIGTERM;\n2. перестать принимать новые соединения (`server.close()`, health check возвращает «не готов»);\n3. дождаться завершения текущих запросов и задач (с таймаутом);\n4. закрыть ресурсы: пулы соединений с базой, очереди, кэш;\n5. выйти через `process.exit(0)`.",
+      "keyPoints": [
+        "SIGINT — Ctrl+C, SIGTERM — остановка от системы и оркестратора",
+        "SIGKILL нельзя перехватить, приходит после таймаута",
+        "Перестать принимать новые соединения, дождаться текущих запросов",
+        "Закрыть соединения с базой и очередями, затем выйти"
+      ],
+      "explanation": "Без graceful shutdown каждый деплой обрывает часть запросов пользователей — это заметно на графиках ошибок 502 во время выкатки.",
+      "formats": [
+        "ordering",
+        "open_text",
+        "open_voice"
+      ],
+      "ordering": [
+        "Процесс получает сигнал SIGTERM",
+        "Сервер перестаёт принимать новые соединения",
+        "Текущие запросы завершаются (с таймаутом)",
+        "Закрываются соединения с базой данных и очередями",
+        "Процесс завершается с кодом 0"
+      ],
+      "sources": [
+        "https://nodejs.org/api/process.html#signal-events"
+      ]
+    },
+    {
+      "id": "nodejs-019",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "security"
+      ],
+      "prompt": "Какие уязвимости типичны для Node.js-сервера и как от них защититься?",
+      "answer": "- **Инъекции** (SQL, NoSQL, команд ОС) — параметризованные запросы или ORM, никакой склейки строк с пользовательским вводом; `execFile`/`spawn` с массивом аргументов вместо `exec`.\n- **Path traversal** (`../../etc/passwd`) — нормализовать путь (`path.resolve`) и проверять, что он внутри разрешённой папки.\n- **XSS** — экранирование при выводе, Content Security Policy, httpOnly cookies.\n- **CSRF** — `SameSite` cookies, CSRF-токены, проверка `Origin`.\n- **Валидация входа** — схемы (Zod), ограничения размера тела запроса.\n- **DoS** — rate limiting, таймауты, защита от ReDoS.\n- **Заголовки безопасности** — `helmet`.\n- **Секреты** — в переменных окружения или секрет-хранилище, не в коде и логах.\n- **Зависимости** — `npm audit`, Dependabot, lock-файл, осторожность с postinstall-скриптами (атаки на цепочку поставок).",
+      "keyPoints": [
+        "Инъекции: параметризованные запросы, без склейки строк; spawn вместо exec",
+        "Path traversal: нормализация пути и проверка разрешённой папки",
+        "Валидация входа, лимиты размера, rate limiting, таймауты",
+        "Секреты в окружении, helmet, npm audit и контроль зависимостей"
+      ],
+      "explanation": "Атаки на цепочку поставок через npm-пакеты — актуальная тема последних лет: lock-файл, проверка новых зависимостей и `npm ci` в CI снижают риск.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Параметризованный SQL-запрос вместо склейки строки с пользовательским вводом",
+          "Проверка, что путь к файлу после path.resolve остаётся внутри разрешённой папки",
+          "Rate limiting на эндпоинте логина"
+        ],
+        "distractors": [
+          "Хранить API-ключи в коде, если репозиторий приватный",
+          "child_process.exec(`convert ${req.query.file}`) — безопасный вызов",
+          "Валидация только на фронтенде достаточна"
+        ]
+      },
+      "sources": [
+        "https://nodejs.org/en/learn/getting-started/security-best-practices"
+      ]
+    },
+    {
+      "id": "nodejs-020",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "auth",
+        "jwt",
+        "sessions",
+        "api"
+      ],
+      "prompt": "Чем отличается аутентификация через сессии от JWT? Что выбрать для веб-приложения?",
+      "answer": "**Сессии:** после входа сервер создаёт запись сессии (в Redis или базе) и отдаёт её id в **httpOnly cookie**. На каждый запрос сервер находит сессию по id. Плюсы: легко отозвать (удалить сессию), в cookie нет данных. Минус: нужно общее хранилище для нескольких серверов.\n\n**JWT:** сервер выдаёт подписанный токен с данными (`sub`, роли, `exp`). Сервер проверяет подпись без обращения к базе — удобно для микросервисов и мобильных клиентов. Минусы: токен **нельзя отозвать** до истечения срока без чёрного списка; данные в нём видны всем (base64, не шифрование).\n\nПрактика: короткий access-токен (5–15 мин) + refresh-токен с ротацией; хранить в httpOnly cookie, а не в `localStorage` (уязвим к XSS). Пароли — только хэши (bcrypt, argon2). Для браузерного приложения на одном домене сессии в cookie обычно проще и безопаснее.",
+      "keyPoints": [
+        "Сессия: id в httpOnly cookie, данные на сервере, легко отозвать",
+        "JWT: подписанный токен, проверяется без базы, но трудно отозвать",
+        "Данные JWT видны всем — это подпись, а не шифрование",
+        "Короткий access + refresh с ротацией, httpOnly cookie, пароли — bcrypt/argon2"
+      ],
+      "explanation": "«JWT в localStorage» — популярный, но слабый вариант: любой XSS-скрипт может украсть токен.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Данные в JWT может прочитать любой, у кого есть токен: подпись защищает от подделки, но не скрывает содержимое"
+        ],
+        "distractors": [
+          "JWT зашифрован, поэтому в нём можно хранить пароль пользователя",
+          "JWT легко отозвать сразу после выдачи без дополнительного хранилища",
+          "Хранить токен в localStorage безопаснее, чем в httpOnly cookie"
+        ]
+      },
+      "sources": [
+        "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
+        "https://jwt.io/introduction"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,798 @@
+{
+  "topic": "nextjs",
+  "questions": [
+    {
+      "id": "nextjs-001",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "basics"
+      ],
+      "prompt": "Зачем нужен Next.js? Что он даёт по сравнению с React SPA?",
+      "answer": "Next.js — full-stack фреймворк на React. Чистый React — библиотека для UI: маршрутизацию, рендеринг на сервере, сборку и загрузку данных нужно собирать самому.\n\nЧто даёт Next.js:\n- **рендеринг на сервере и статическая генерация** — готовый HTML сразу: лучше SEO, превью в соцсетях, быстрее первый показ контента;\n- **файловая маршрутизация** с вложенными layout'ами (App Router);\n- **React Server Components** — меньше JavaScript в браузере, данные загружаются прямо на сервере;\n- **серверная часть в том же проекте** — Route Handlers и Server Actions;\n- **встроенные оптимизации** — изображения, шрифты, разделение кода по маршрутам, prefetch ссылок, кэширование;\n- сборка (Turbopack), TypeScript и деплой «из коробки».\n\nКогда SPA достаточно: внутренние панели за логином без требований к SEO.",
+      "keyPoints": [
+        "Full-stack фреймворк поверх React",
+        "SSR и статическая генерация: SEO и быстрый первый показ",
+        "Файловая маршрутизация, Server Components, Route Handlers и Server Actions",
+        "Встроенные оптимизации: изображения, шрифты, code splitting, prefetch"
+      ],
+      "explanation": "Хороший ответ называет и компромиссы: нужен сервер (или статический экспорт с ограничениями), выше сложность модели рендеринга и кэширования.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Готовый HTML с сервера для SEO и быстрого первого показа, плюс маршрутизация, серверный код и оптимизации из коробки"
+        ],
+        "distractors": [
+          "Next.js — это замена React с другим синтаксисом компонентов",
+          "Next.js нужен только для того, чтобы писать на TypeScript",
+          "Next.js работает только как генератор статических сайтов без сервера"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started"
+      ]
+    },
+    {
+      "id": "nextjs-002",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "app-router",
+        "pages-router"
+      ],
+      "prompt": "Чем App Router отличается от Pages Router?",
+      "answer": "**Pages Router** (`pages/`) — исходный роутер. Каждая страница — клиентский компонент, данные загружаются через `getServerSideProps`, `getStaticProps`, `getStaticPaths`. Общий layout — через `_app.tsx`.\n\n**App Router** (`app/`, с Next.js 13) — современный роутер на React Server Components:\n- компоненты по умолчанию **серверные**;\n- **вложенные layout'ы**, которые сохраняют состояние при навигации;\n- специальные файлы `loading`, `error`, `not-found` на каждый сегмент;\n- загрузка данных прямо в `async`-компонентах, стриминг через Suspense;\n- Server Actions и Route Handlers.\n\nОба роутера можно использовать в одном проекте при миграции. Для новых проектов рекомендуется App Router.",
+      "keyPoints": [
+        "Pages Router: pages/, клиентские компоненты, getServerSideProps/getStaticProps",
+        "App Router: app/, Server Components по умолчанию",
+        "Вложенные layout'ы, loading/error на сегмент, стриминг",
+        "Данные — в async-компонентах; роутеры можно совмещать при миграции"
+      ],
+      "explanation": "Если на собеседовании спрашивают про `getServerSideProps`, ответьте и про его эквивалент в App Router: async-компонент, читающий данные при запросе.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "В App Router компоненты по умолчанию серверные",
+          "isTrue": true
+        },
+        {
+          "text": "В App Router данные загружают через getServerSideProps",
+          "isTrue": false
+        },
+        {
+          "text": "Layout в App Router сохраняет своё состояние при переходе между дочерними страницами",
+          "isTrue": true
+        },
+        {
+          "text": "App Router и Pages Router нельзя использовать в одном проекте",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/project-structure"
+      ]
+    },
+    {
+      "id": "nextjs-003",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "routing",
+        "file-conventions"
+      ],
+      "prompt": "Как работает файловая маршрутизация в App Router?",
+      "answer": "Маршрут задаётся структурой папок внутри `app/`, а публичным его делает файл `page.tsx`.\n\n- `app/about/page.tsx` → `/about`;\n- **динамический сегмент** `app/blog/[slug]/page.tsx` → `/blog/hello`, значение приходит в `params`;\n- **catch-all** `[...slug]` → `/docs/a/b/c`; опциональный `[[...slug]]` совпадает и с `/docs`;\n- **группа маршрутов** `(marketing)` — папка в скобках не попадает в URL, нужна для организации и отдельных layout'ов;\n- **приватная папка** `_components` — не участвует в маршрутизации;\n- `route.ts` — Route Handler (API-эндпоинт) вместо страницы.\n\nФайлы рядом со страницей (компоненты, стили) не становятся маршрутами, пока нет `page` или `route`.",
+      "keyPoints": [
+        "Папки в app/ задают URL, page.tsx делает маршрут публичным",
+        "[slug] — динамический сегмент, [...slug] — catch-all",
+        "(group) не попадает в URL, _folder исключается из маршрутизации",
+        "route.ts — API-эндпоинт вместо страницы"
+      ],
+      "explanation": "Группы маршрутов удобны, чтобы дать маркетинговым страницам и личному кабинету разные корневые layout'ы без лишних сегментов в URL.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "app/(shop)/cart/page.tsx открывается по адресу /cart",
+          "app/blog/[slug]/page.tsx обрабатывает /blog/any-post",
+          "app/docs/[...slug]/page.tsx обрабатывает /docs/a/b/c"
+        ],
+        "distractors": [
+          "app/_components/Button.tsx открывается по адресу /_components/Button",
+          "Любой .tsx-файл в app/ автоматически становится страницей",
+          "app/(shop)/cart/page.tsx открывается по адресу /(shop)/cart"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/api-reference/file-conventions/dynamic-routes"
+      ]
+    },
+    {
+      "id": "nextjs-004",
+      "level": 1,
+      "difficulty": "middle",
+      "tags": [
+        "file-conventions",
+        "layout",
+        "error",
+        "loading"
+      ],
+      "prompt": "Какие специальные файлы есть в сегменте маршрута? Расставьте их в порядке вложенности.",
+      "answer": "Специальные файлы сегмента и что они делают:\n- `layout.tsx` — общая оболочка, **сохраняет состояние** и не перерендеривается при навигации между дочерними страницами;\n- `template.tsx` — как layout, но **пересоздаётся** при каждой навигации (анимации входа, сброс состояния);\n- `error.tsx` — Error Boundary сегмента, должен быть клиентским (`'use client'`), получает `error` и `reset`;\n- `loading.tsx` — Suspense-граница: мгновенный UI загрузки, пока стримится страница;\n- `not-found.tsx` — UI для `notFound()`;\n- `page.tsx` — содержимое маршрута.\n\nПорядок вложенности: layout → template → error → loading → not-found → page. Поэтому `error.tsx` не ловит ошибки `layout.tsx` того же сегмента — для этого нужен `error.tsx` уровнем выше (или `global-error.tsx` для корня).",
+      "keyPoints": [
+        "layout сохраняет состояние, template пересоздаётся при навигации",
+        "error.tsx — клиентский Error Boundary с error и reset",
+        "loading.tsx — Suspense-граница с мгновенным UI загрузки",
+        "Порядок: layout → template → error → loading → not-found → page"
+      ],
+      "explanation": "Из порядка вложенности следует частый вопрос-ловушка: ошибку в layout ловит error.tsx родительского сегмента, а не соседний.",
+      "formats": [
+        "ordering",
+        "open_text",
+        "open_voice"
+      ],
+      "ordering": [
+        "layout.tsx",
+        "template.tsx",
+        "error.tsx",
+        "loading.tsx",
+        "not-found.tsx",
+        "page.tsx"
+      ],
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/project-structure#component-hierarchy"
+      ]
+    },
+    {
+      "id": "nextjs-005",
+      "level": 1,
+      "difficulty": "junior",
+      "tags": [
+        "navigation",
+        "link",
+        "prefetch"
+      ],
+      "prompt": "Как устроена навигация: Link, prefetch, useRouter?",
+      "answer": "- `<Link href=\"/dashboard\">` — клиентская навигация без перезагрузки страницы. Обновляются только изменившиеся сегменты, общие layout'ы сохраняют состояние.\n- **Prefetch** — когда ссылка попадает в область видимости, Next.js заранее загружает маршрут в фоне (только в продакшене). Для статических маршрутов — целиком, для динамических — частично, до ближайшей границы `loading`. Отключается через `prefetch={false}`.\n- **Программная навигация** — `useRouter()` из `next/navigation` (а не `next/router`, который для Pages Router): `push`, `replace`, `back`, `refresh`. Текущий путь и параметры — `usePathname()` и `useSearchParams()`.\n- На сервере — `redirect()` из `next/navigation`.",
+      "keyPoints": [
+        "Link — клиентская навигация без перезагрузки, layout'ы сохраняются",
+        "Prefetch при появлении ссылки в viewport, только в продакшене",
+        "useRouter, usePathname, useSearchParams — из next/navigation",
+        "На сервере — redirect()"
+      ],
+      "explanation": "Частая ошибка при переходе на App Router — импорт `useRouter` из `next/router`: в App Router он не работает.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "import { useRouter } from 'next/navigation'"
+        ],
+        "distractors": [
+          "import { useRouter } from 'next/router'",
+          "import { useRouter } from 'react-router-dom'",
+          "import { useRouter } from 'next/link'"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/api-reference/components/link"
+      ]
+    },
+    {
+      "id": "nextjs-006",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "rendering",
+        "ssr",
+        "ssg",
+        "isr"
+      ],
+      "prompt": "Чем отличаются SSR, SSG, ISR и CSR? Когда что использовать?",
+      "answer": "- **SSG** (статическая генерация) — HTML создаётся при сборке и отдаётся с CDN. Самый быстрый вариант. Для лендингов, документации, блога.\n- **SSR** (рендеринг на сервере) — HTML создаётся на каждый запрос. Для персональных данных и часто меняющегося контента: профиль, корзина, дашборд.\n- **ISR** (инкрементальная регенерация) — статика, которая обновляется в фоне по времени или по событию, без пересборки сайта. Для каталогов товаров, статей из CMS.\n- **CSR** (рендеринг в браузере) — сервер отдаёт оболочку, данные грузятся в браузере. Для интерактивных частей за логином, где SEO не важно.\n\nВ App Router стратегию не выбирают одной функцией, как в Pages Router: маршрут статический, пока не использует данные запроса (`cookies`, `headers`, `searchParams`) или некэшированные данные. Разные части одной страницы могут рендериться по-разному.",
+      "keyPoints": [
+        "SSG — HTML при сборке, отдаётся с CDN",
+        "SSR — HTML на каждый запрос, для персональных и свежих данных",
+        "ISR — статика, обновляемая в фоне по времени или событию",
+        "CSR — данные в браузере; в App Router стратегию определяют данные, которые использует маршрут"
+      ],
+      "explanation": "Сильный ответ — не определения, а выбор для конкретной страницы: «каталог — ISR с обновлением по вебхуку CMS, корзина — динамически, карточка товара — статика с динамическим блоком наличия».",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Страница документации — статическая генерация",
+          "Каталог товаров из CMS — ISR с обновлением при изменении контента",
+          "Личный кабинет с данными пользователя — рендеринг на каждый запрос"
+        ],
+        "distractors": [
+          "Корзину пользователя лучше сгенерировать при сборке",
+          "ISR пересобирает весь сайт при каждом запросе",
+          "SSG подходит для страницы с курсом валют в реальном времени"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/guides/incremental-static-regeneration"
+      ]
+    },
+    {
+      "id": "nextjs-007",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "static",
+        "dynamic",
+        "runtime-apis"
+      ],
+      "prompt": "Что делает маршрут в App Router динамическим, а не статическим?",
+      "answer": "По умолчанию Next.js пытается **предварительно отрендерить** маршрут при сборке. Динамическим (рендеринг при запросе) его делают:\n- **runtime API** — `cookies()`, `headers()`, `searchParams`, а также `params`, не перечисленные в `generateStaticParams`;\n- **некэшированные данные** — запрос к API или базе без кэширования;\n- `connection()` — явное указание ждать запроса.\n\nС **Cache Components** (Next.js 16) это работает на уровне компонентов: всё статическое и кэшированное (`'use cache'`) попадает в **статическую оболочку**, а компоненты с runtime API и некэшированными данными оборачиваются в `<Suspense>` и **стримятся** при запросе. Без Suspense-границы Next.js сообщит об ошибке «blocking route».",
+      "keyPoints": [
+        "По умолчанию маршрут предварительно рендерится при сборке",
+        "Динамическим делают cookies(), headers(), searchParams и некэшированные данные",
+        "С Cache Components статическая оболочка + динамические части в Suspense",
+        "Без Suspense вокруг динамических данных — ошибка blocking route"
+      ],
+      "explanation": "Ключевой вопрос при проектировании страницы: «нужна ли этому компоненту информация из запроса?» — если нет, он может быть статическим.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Чтение cookies() в серверном компоненте",
+          "Использование searchParams страницы",
+          "Некэшированный запрос к базе данных"
+        ],
+        "distractors": [
+          "Использование Tailwind-классов",
+          "Импорт клиентского компонента с 'use client'",
+          "Функция с директивой 'use cache'"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/caching#working-with-runtime-apis"
+      ]
+    },
+    {
+      "id": "nextjs-008",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "server-client-boundary",
+        "use-client"
+      ],
+      "prompt": "Где ставить 'use client'? Как вставить серверный компонент внутрь клиентского?",
+      "answer": "`'use client'` отмечает **границу**: файл с директивой и всё, что он импортирует, попадает в клиентский бандл. Поэтому директиву ставят как можно **ниже по дереву** — на интерактивные «листья» (кнопка, форма, слайдер), а не на всю страницу или layout.\n\nКлиентский компонент **не может импортировать** серверный, но может принять его как `children` или другой проп с JSX. Серверный компонент рендерится на сервере, и клиентский получает уже готовый результат:\n\n```tsx\n// page.tsx (серверный)\n<Modal>\n  <ServerCart />\n</Modal>\n```\n\nПропсы через границу должны быть сериализуемыми: строки, числа, объекты, массивы, Date, промисы, JSX. Функции — только Server Actions. Код, который не должен попасть в браузер, защищают импортом `server-only`.",
+      "keyPoints": [
+        "'use client' — граница: файл и его импорты попадают в клиентский бандл",
+        "Директиву ставят на интерактивные листья, а не на всю страницу",
+        "Серверный компонент передают в клиентский через children или пропсы",
+        "Пропсы через границу сериализуемые; server-only защищает серверный код"
+      ],
+      "explanation": "Типичная ошибка — `'use client'` в корневом layout ради одного провайдера. Правильно: вынести провайдер в отдельный клиентский компонент и обернуть им `children`.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Передать серверный компонент в клиентский через children: <Modal><ServerCart /></Modal>"
+        ],
+        "distractors": [
+          "Импортировать серверный компонент внутри файла с 'use client'",
+          "Добавить 'use client' в корневой layout, чтобы всё работало одинаково",
+          "Передать в клиентский компонент обычную функцию-колбэк из серверного"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/guides/server-and-client-boundary"
+      ]
+    },
+    {
+      "id": "nextjs-009",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "streaming",
+        "suspense",
+        "loading"
+      ],
+      "prompt": "Что такое стриминг в Next.js и как работают loading.tsx и Suspense?",
+      "answer": "**Стриминг** — сервер отправляет HTML частями: сначала оболочку страницы и fallback'и, а медленные части — по мере готовности, в том же ответе. Пользователь видит страницу сразу, а не ждёт самый медленный запрос.\n\n- `loading.tsx` автоматически оборачивает страницу сегмента в `<Suspense>` — мгновенное состояние загрузки при навигации, layout остаётся интерактивным.\n- `<Suspense fallback={...}>` вокруг отдельных компонентов — гранулярный стриминг: каждый блок загружается независимо.\n\nПлюсы: быстрее First Contentful Paint и Time to First Byte, медленный блок не задерживает остальные. Важно: стриминг не работает, если хостинг или прокси буферизует ответ.",
+      "keyPoints": [
+        "Стриминг — HTML отправляется частями по мере готовности",
+        "loading.tsx автоматически оборачивает страницу в Suspense",
+        "Suspense вокруг компонентов даёт независимую загрузку блоков",
+        "Медленный запрос не блокирует всю страницу"
+      ],
+      "explanation": "Хороший пример: на странице товара описание приходит сразу, а блок «рекомендации» с медленным API — позже, со своим скелетоном.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "При стриминге пользователь ждёт, пока загрузятся все данные страницы",
+          "isTrue": false
+        },
+        {
+          "text": "loading.tsx автоматически создаёт Suspense-границу вокруг страницы сегмента",
+          "isTrue": true
+        },
+        {
+          "text": "Несколько Suspense-границ позволяют блокам страницы загружаться независимо",
+          "isTrue": true
+        },
+        {
+          "text": "Стриминг работает одинаково, даже если прокси буферизует весь ответ",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://nextjs.org/docs/app/guides/streaming"
+      ]
+    },
+    {
+      "id": "nextjs-010",
+      "level": 2,
+      "difficulty": "middle",
+      "tags": [
+        "generateStaticParams",
+        "dynamic-routes"
+      ],
+      "prompt": "Как предварительно отрендерить динамические маршруты? Что такое generateStaticParams?",
+      "code": {
+        "lang": "tsx",
+        "source": "export default async function Page({\n  params,\n}: {\n  params: Promise<{ slug: string }>;\n}) {\n  const { slug } = /* ? */;\n  return <h1>{slug}</h1>;\n}"
+      },
+      "answer": "`generateStaticParams` в файле динамического маршрута возвращает список параметров, для которых страницы нужно сгенерировать **при сборке**:\n\n```tsx\nexport async function generateStaticParams() {\n  const posts = await getPosts();\n  return posts.map((post) => ({ slug: post.slug }));\n}\n```\n\nЭто замена `getStaticPaths` из Pages Router. Можно вернуть только популярные страницы, а остальные сгенерировать при первом запросе и закэшировать (ISR). `dynamicParams = false` запрещает неизвестные параметры (вернётся 404).\n\nС Next.js 15 `params` и `searchParams` — **промисы**: `const { slug } = await params`.",
+      "keyPoints": [
+        "generateStaticParams возвращает параметры для генерации при сборке",
+        "Замена getStaticPaths из Pages Router",
+        "Можно сгенерировать популярные страницы, остальные — при первом запросе",
+        "С Next.js 15 params — промис: const { slug } = await params"
+      ],
+      "explanation": "Для сайта с миллионом товаров не генерируют всё при сборке: берут топ-1000, остальное догенерируется по запросу.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "await params"
+        ],
+        "distractors": [
+          "params",
+          "useParams()",
+          "params.then()"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/api-reference/functions/generate-static-params"
+      ]
+    },
+    {
+      "id": "nextjs-011",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "data-fetching"
+      ],
+      "prompt": "Как загружать данные в App Router? Как избежать водопада запросов?",
+      "code": {
+        "lang": "tsx",
+        "source": "export default async function Page() {\n  const user = await getUser();\n  const posts = await getPosts();\n  return <Dashboard user={user} posts={posts} />;\n}"
+      },
+      "answer": "В App Router данные загружают прямо в **async Server Components**: `const posts = await getPosts()` — можно обращаться к базе, ORM или API без отдельного эндпоинта, секреты не попадают в браузер.\n\n**Водопад** — когда запросы идут последовательно без необходимости. Решения:\n- запускать независимые запросы параллельно: `await Promise.all([getUser(), getPosts()])`;\n- разносить блоки по разным компонентам в своих `<Suspense>` — они загружаются одновременно и стримятся независимо;\n- передавать промис в клиентский компонент и читать через `use()`.\n\n**Дедупликация**: одинаковые `fetch` в рамках одного рендера выполняются один раз; для запросов к базе — обёртка `React.cache()`. Поэтому одни и те же данные можно запрашивать в нескольких компонентах, а не пробрасывать пропсами.",
+      "keyPoints": [
+        "Данные загружают в async Server Components, напрямую из базы или API",
+        "Независимые запросы — параллельно через Promise.all или отдельные Suspense",
+        "Промис можно передать в клиентский компонент и прочитать через use()",
+        "Дедупликация: fetch в одном рендере и React.cache для запросов к базе"
+      ],
+      "explanation": "Клиентская загрузка (TanStack Query, SWR) всё ещё уместна: бесконечный скролл, данные, зависящие от действий пользователя, поллинг.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Запросы независимы, но идут последовательно — нужно запустить их параллельно через Promise.all"
+        ],
+        "distractors": [
+          "Код правильный: await в серверном компоненте всегда выполняется параллельно",
+          "Нужно перенести оба запроса в useEffect клиентского компонента",
+          "Серверный компонент не может быть async"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/fetching-data"
+      ]
+    },
+    {
+      "id": "nextjs-012",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "use-cache",
+        "cache-components"
+      ],
+      "prompt": "Как работает кэширование с Cache Components и директивой 'use cache'?",
+      "answer": "В Next.js 16 появилась модель **Cache Components** (`cacheComponents: true` в `next.config`). Кэширование стало **явным**:\n\n- `'use cache'` в начале async-функции или компонента кэширует результат. Можно кэшировать данные (`getProducts()`) или целый компонент или страницу.\n- **Ключ кэша** строится автоматически из аргументов и замкнутых значений: разные аргументы — разные записи.\n- `cacheLife('hours')` задаёт время жизни (профили `seconds`, `minutes`, `hours`, `days`, `weeks`, `max` или свои значения).\n- `cacheTag('products')` помечает запись тегом для точечной инвалидации.\n\nВсё некэшированное и зависящее от запроса оборачивается в `<Suspense>` и стримится. Внутри `'use cache'` нельзя читать `cookies()` и `headers()` — их значения передают аргументами.",
+      "keyPoints": [
+        "Cache Components включаются флагом cacheComponents в Next.js 16",
+        "'use cache' кэширует результат функции или компонента",
+        "Ключ кэша строится из аргументов и замкнутых значений",
+        "cacheLife задаёт время жизни, cacheTag — тег для инвалидации"
+      ],
+      "explanation": "Главная мысль модели: «ничего не кэшируется неявно». Это ответ на путаницу в Next.js 13–14, где многое кэшировалось по умолчанию.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "Разные аргументы функции с 'use cache' создают разные записи в кэше",
+          "isTrue": true
+        },
+        {
+          "text": "Внутри функции с 'use cache' можно напрямую вызвать cookies()",
+          "isTrue": false
+        },
+        {
+          "text": "cacheTag позволяет потом точечно сбросить кэш по тегу",
+          "isTrue": true
+        },
+        {
+          "text": "С Cache Components все запросы к базе кэшируются автоматически, без директив",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/caching"
+      ]
+    },
+    {
+      "id": "nextjs-013",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "revalidation"
+      ],
+      "prompt": "Чем отличаются revalidateTag, updateTag и revalidatePath?",
+      "answer": "Все три сбрасывают кэш после изменения данных.\n\n- `revalidateTag('products', 'max')` — сбрасывает записи с тегом по схеме **stale-while-revalidate**: пользователи сразу получают старую версию, а свежая генерируется в фоне. Для контента, где небольшая задержка допустима: каталог, статьи. Вызывается из Server Action или Route Handler (например, вебхук CMS).\n- `updateTag('posts')` — **немедленно** истекает кэш для сценария «прочитать свою запись»: пользователь сразу видит своё изменение. Работает **только в Server Actions**.\n- `revalidatePath('/profile')` — сбрасывает все данные маршрута, когда теги неизвестны.\n\nТеги точнее путей и не сбрасывают лишнее, поэтому документация рекомендует их.",
+      "keyPoints": [
+        "revalidateTag — stale-while-revalidate: старое сразу, новое в фоне",
+        "updateTag — немедленное истечение, только в Server Actions",
+        "revalidatePath — сброс всего маршрута, когда теги неизвестны",
+        "Теги точнее путей"
+      ],
+      "explanation": "Пример выбора: пользователь сохранил профиль — `updateTag` (должен сразу увидеть изменения); редактор опубликовал статью в CMS — вебхук вызывает `revalidateTag`.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "updateTag — чтобы пользователь сразу увидел свой новый комментарий",
+          "revalidateTag из вебхука CMS после публикации статьи",
+          "revalidatePath — когда нужно обновить маршрут, а теги данных неизвестны"
+        ],
+        "distractors": [
+          "updateTag можно вызывать из Route Handler для вебхуков",
+          "revalidateTag блокирует всех пользователей до генерации новой версии",
+          "revalidatePath точнее тегов и рекомендуется по умолчанию"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/revalidating"
+      ]
+    },
+    {
+      "id": "nextjs-014",
+      "level": 3,
+      "difficulty": "middle",
+      "tags": [
+        "caching",
+        "next-15",
+        "fetch"
+      ],
+      "prompt": "Что изменилось в кэшировании между Next.js 14, 15 и 16?",
+      "answer": "- **Next.js 13–14**: многое кэшировалось **неявно** — `fetch` по умолчанию кэшировался (`force-cache`), GET-обработчики маршрутов тоже, клиентский Router Cache долго держал страницы. Частая жалоба — «почему данные не обновляются».\n- **Next.js 15**: значения по умолчанию перевернули — `fetch` **не кэшируется**, GET Route Handlers не кэшируются, Router Cache по умолчанию не переиспользует страницы. Кэширование включают явно: `cache: 'force-cache'`, `next: { revalidate: 60 }`.\n- **Next.js 16**: модель **Cache Components** — явная директива `'use cache'` с `cacheLife`/`cacheTag`, статическая оболочка и стриминг динамических частей (Partial Prerendering). Прежняя модель продолжает работать без флага `cacheComponents`.\n\nВ проектах на 14 до сих пор встречается старое поведение — это стоит знать для миграций.",
+      "keyPoints": [
+        "Next.js 14: fetch и GET-обработчики кэшировались по умолчанию",
+        "Next.js 15: fetch по умолчанию не кэшируется, кэш включают явно",
+        "Next.js 16: Cache Components — 'use cache', cacheLife, cacheTag",
+        "Без флага cacheComponents работает прежняя модель"
+      ],
+      "explanation": "Многие компании ещё на Next.js 14 или 15, поэтому знание всех трёх моделей — плюс на собеседовании.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "С Next.js 15 fetch по умолчанию не кэшируется, а в 16 появилась явная директива 'use cache'"
+        ],
+        "distractors": [
+          "С Next.js 15 все fetch кэшируются навсегда по умолчанию",
+          "В Next.js 16 кэширование удалили полностью",
+          "Кэширование fetch никогда не менялось между версиями"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/guides/caching-without-cache-components"
+      ]
+    },
+    {
+      "id": "nextjs-015",
+      "level": 3,
+      "difficulty": "senior",
+      "tags": [
+        "ppr",
+        "static-shell",
+        "suspense"
+      ],
+      "prompt": "Что такое Partial Prerendering (статическая оболочка)? Что попадёт в статическую часть страницы?",
+      "code": {
+        "lang": "tsx",
+        "source": "async function ProductList() {\n  'use cache';\n  cacheLife('hours');\n  const products = await db.products.findMany();\n  return <ul>{/* ... */}</ul>;\n}\n\nasync function Cart() {\n  const session = (await cookies()).get('session');\n  return <CartView session={session?.value} />;\n}\n\nexport default function Page() {\n  return (\n    <>\n      <h1>Магазин</h1>\n      <ProductList />\n      <Suspense fallback={<p>Загрузка корзины…</p>}>\n        <Cart />\n      </Suspense>\n    </>\n  );\n}"
+      },
+      "answer": "**Partial Prerendering** — одна страница сочетает статику и динамику. При сборке Next.js рендерит всё, что может: статическую разметку и кэшированные (`'use cache'`) компоненты — это **статическая оболочка** (static shell), она отдаётся мгновенно, в том числе с CDN. Динамические части, обёрнутые в `<Suspense>`, заменяются fallback'ами и **стримятся** при запросе в том же HTTP-ответе.\n\nВ примере в оболочку попадут заголовок `<h1>`, кэшированный каталог `<ProductList />` и fallback «Загрузка корзины…». Сама `<Cart />` читает `cookies()` и выполнится при запросе.\n\nВ Next.js 16 это работает через Cache Components; прежний флаг `experimental_ppr` удалён.",
+      "keyPoints": [
+        "Статическая оболочка рендерится при сборке и отдаётся мгновенно",
+        "В оболочку входят статическая разметка, кэшированные компоненты и fallback'и",
+        "Динамические части в Suspense стримятся при запросе в том же ответе",
+        "В Next.js 16 PPR работает через Cache Components"
+      ],
+      "explanation": "Раньше нужно было выбирать стратегию для всей страницы: одна строка с `cookies()` делала динамическим весь маршрут. PPR снимает это ограничение.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Заголовок, кэшированный ProductList и fallback «Загрузка корзины…»; Cart — при запросе"
+        ],
+        "distractors": [
+          "Вся страница динамическая, потому что Cart читает cookies()",
+          "Только заголовок; ProductList и Cart выполняются при каждом запросе",
+          "Вся страница, включая Cart с данными сессии"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/caching"
+      ]
+    },
+    {
+      "id": "nextjs-016",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "server-actions",
+        "route-handlers",
+        "security"
+      ],
+      "prompt": "Чем Server Actions отличаются от Route Handlers? Как их защищать?",
+      "answer": "**Server Actions** — async-функции с `'use server'`, которые вызываются из компонентов (через `<form action>` или напрямую). Next.js сам создаёт для них POST-эндпоинт. Подходят для **мутаций из своего UI**: отправка формы, лайк, сохранение настроек. Работают с `useActionState`, `updateTag`/`revalidatePath`, `redirect`, формы работают даже без JS.\n\n**Route Handlers** (`app/api/.../route.ts`) — обычные HTTP-эндпоинты с `GET`, `POST` и другими методами. Подходят для **внешних клиентов**: вебхуки, мобильное приложение, публичный API, нестандартные ответы (файлы, стриминг).\n\n**Безопасность:** Server Action — это публичный эндпоинт, его можно вызвать прямым POST-запросом в обход интерфейса. Поэтому **в каждом** действии проверяют аутентификацию и права, а входные данные валидируют (например, Zod).",
+      "keyPoints": [
+        "Server Actions — функции 'use server' для мутаций из своего UI",
+        "Route Handlers — HTTP-эндпоинты для вебхуков, мобильных клиентов, публичного API",
+        "Server Action — публичный POST-эндпоинт, вызывается в обход UI",
+        "В каждом действии — проверка аутентификации, прав и валидация входа"
+      ],
+      "explanation": "Ошибка «проверю права только в интерфейсе — кнопка же скрыта» в Next.js особенно опасна: action доступен любому, кто знает, как отправить запрос.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Server Action можно вызвать прямым POST-запросом в обход интерфейса",
+          "Для вебхука платёжной системы лучше подходит Route Handler",
+          "Внутри каждого Server Action нужно проверять, авторизован ли пользователь"
+        ],
+        "distractors": [
+          "Server Actions доступны только из компонентов, поэтому проверка прав не нужна",
+          "Route Handlers нельзя вызывать из мобильного приложения",
+          "Server Actions выполняются в браузере пользователя"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/mutating-data"
+      ]
+    },
+    {
+      "id": "nextjs-017",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "proxy",
+        "middleware"
+      ],
+      "prompt": "Что такое proxy.ts (бывший middleware)? Для чего его использовать?",
+      "answer": "`proxy.ts` в корне проекта (или в `src/`) выполняется **до** рендеринга маршрута на каждый подходящий запрос. В Next.js 16 `middleware` переименован в `proxy`: название подчёркивает, что это сетевая граница перед приложением. По умолчанию работает в **Node.js runtime**.\n\nДля чего: редиректы и rewrites, A/B-тесты, определение языка, установка заголовков и cookies, **оптимистичная** проверка авторизации (есть ли cookie сессии → редирект на `/login`), обновление сессии.\n\nЧего не делать: тяжёлые запросы к базе — proxy выполняется на каждый запрос, включая prefetch. Ограничивают его через `config.matcher`, исключая статику. И **не полагаться только на proxy для защиты данных**: проверки прав должны быть рядом с данными (Data Access Layer, Server Actions).",
+      "keyPoints": [
+        "proxy выполняется до рендеринга маршрута на каждый подходящий запрос",
+        "В Next.js 16 middleware переименован в proxy, по умолчанию Node.js runtime",
+        "Для редиректов, rewrites, заголовков, языка, оптимистичных проверок сессии",
+        "Без тяжёлых запросов к базе; matcher исключает статику; защита данных — не только здесь"
+      ],
+      "explanation": "Аргумент против «авторизации только в middleware»: уязвимость CVE-2025-29927 (март 2025) позволяла обойти middleware специальным заголовком. Приложения, проверявшие права ещё и рядом с данными, остались защищены.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "В Next.js 16 proxy по умолчанию работает в Node.js runtime",
+          "isTrue": true
+        },
+        {
+          "text": "proxy выполняется и для prefetch-запросов",
+          "isTrue": true
+        },
+        {
+          "text": "Проверки прав в proxy достаточно — в Server Actions проверять не нужно",
+          "isTrue": false
+        },
+        {
+          "text": "Без matcher proxy выполняется и для статических файлов",
+          "isTrue": true
+        }
+      ],
+      "sources": [
+        "https://nextjs.org/docs/app/api-reference/file-conventions/proxy"
+      ]
+    },
+    {
+      "id": "nextjs-018",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "auth",
+        "security",
+        "env"
+      ],
+      "prompt": "Как организовать аутентификацию и защиту данных в Next.js App Router?",
+      "answer": "Слои защиты:\n1. **Сессия** — httpOnly, secure cookie с токеном или id сессии (готовые решения: Auth.js, Clerk, Supabase Auth, Better Auth).\n2. **Оптимистичные проверки** в `proxy` — быстро прочитать cookie и сделать редирект, без запросов к базе.\n3. **Data Access Layer (DAL)** — отдельный серверный модуль (`import 'server-only'`), через который идут все запросы к данным. В нём проверяют сессию и права **рядом с данными** и возвращают DTO — только нужные поля, без паролей и внутренних id.\n4. **Каждый Server Action и Route Handler** проверяет права сам.\n\nСекреты: переменные без префикса `NEXT_PUBLIC_` доступны только на сервере. С префиксом `NEXT_PUBLIC_` значение **встраивается в JS-бандл** при сборке и видно всем, поэтому никаких секретов с этим префиксом.",
+      "keyPoints": [
+        "Сессия в httpOnly secure cookie",
+        "Proxy — только оптимистичные проверки без запросов к базе",
+        "Data Access Layer с server-only: проверка прав рядом с данными, DTO без лишних полей",
+        "NEXT_PUBLIC_ встраивается в бандл — секреты только без этого префикса"
+      ],
+      "explanation": "Проверка в layout не защищает данные: layout не перерендеривается при клиентской навигации, а Server Action вызывается отдельно. Проверки должны быть там, где читаются и меняются данные.",
+      "formats": [
+        "single_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "Проверять сессию и права в Data Access Layer рядом с запросами к данным и в каждом Server Action"
+        ],
+        "distractors": [
+          "Проверить авторизацию один раз в корневом layout — этого достаточно",
+          "Хранить секретный ключ API в NEXT_PUBLIC_API_SECRET",
+          "Делать запрос к базе в proxy на каждый запрос для полной проверки прав"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/guides/authentication"
+      ]
+    },
+    {
+      "id": "nextjs-019",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "performance",
+        "image",
+        "font",
+        "metadata",
+        "seo"
+      ],
+      "prompt": "Какие встроенные оптимизации Next.js вы знаете? Как работает SEO в App Router?",
+      "answer": "- `next/image` — автоматическое изменение размера и современные форматы (WebP/AVIF), ленивая загрузка, обязательные размеры или `fill` против сдвигов макета (CLS), `preload` (до Next.js 16 — `priority`) для главного изображения (LCP).\n- `next/font` — шрифты скачиваются при сборке и отдаются с вашего домена, без запросов к Google в рантайме; `size-adjust` против сдвига при загрузке.\n- `next/script` — стратегии загрузки сторонних скриптов (`afterInteractive`, `lazyOnload`).\n- **Разделение кода** по маршрутам автоматически, `next/dynamic` для тяжёлых компонентов; Server Components не добавляют JS в бандл.\n- **Prefetch** ссылок и кэширование.\n\n**SEO**: Metadata API — `export const metadata` или `generateMetadata` в `layout`/`page` (title, description, Open Graph), файлы `sitemap.ts`, `robots.ts`, `opengraph-image.tsx`, JSON-LD.",
+      "keyPoints": [
+        "next/image: размеры, WebP/AVIF, ленивая загрузка, preload для LCP",
+        "next/font: шрифты с вашего домена без сдвига макета",
+        "Code splitting по маршрутам, next/dynamic, Server Components без JS",
+        "SEO: metadata / generateMetadata, sitemap.ts, robots.ts, OG-изображения"
+      ],
+      "explanation": "Связывайте оптимизации с метриками Core Web Vitals: изображения и шрифты — LCP и CLS, меньше JS и Server Components — INP.",
+      "formats": [
+        "multiple_choice",
+        "open_text",
+        "open_voice"
+      ],
+      "choices": {
+        "correct": [
+          "generateMetadata формирует title и Open Graph для динамических страниц",
+          "next/image помогает избежать сдвига макета за счёт известных размеров",
+          "next/font отдаёт шрифты с вашего домена без запросов к Google в рантайме"
+        ],
+        "distractors": [
+          "Метатеги в App Router задают только через next/head",
+          "next/image загружает все изображения сразу, без ленивой загрузки",
+          "Server Components увеличивают размер JS-бандла"
+        ]
+      },
+      "sources": [
+        "https://nextjs.org/docs/app/getting-started/metadata-and-og-images"
+      ]
+    },
+    {
+      "id": "nextjs-020",
+      "level": 4,
+      "difficulty": "middle",
+      "tags": [
+        "next-16",
+        "upgrades"
+      ],
+      "prompt": "Что нового в Next.js 15 и 16?",
+      "answer": "**Next.js 15:**\n- `params`, `searchParams`, `cookies()`, `headers()` стали **асинхронными** — `await params`;\n- `fetch` и GET Route Handlers по умолчанию **не кэшируются**;\n- поддержка React 19.\n\n**Next.js 16** (октябрь 2025):\n- **Turbopack** — сборщик по умолчанию для `next dev` и `next build`;\n- **Cache Components** — `'use cache'`, `cacheLife`, `cacheTag`, Partial Prerendering;\n- `middleware` → **`proxy`**, по умолчанию Node.js runtime;\n- новые API инвалидации: `updateTag`, `refresh()`, обновлённый `revalidateTag`;\n- стабильная поддержка **React Compiler**, React 19.2;\n- `next lint` удалён — используется ESLint напрямую.",
+      "keyPoints": [
+        "Next.js 15: асинхронные params, searchParams, cookies, headers",
+        "Next.js 15: fetch по умолчанию не кэшируется",
+        "Next.js 16: Turbopack по умолчанию, Cache Components",
+        "Next.js 16: middleware → proxy, updateTag, React Compiler"
+      ],
+      "explanation": "Для миграции есть codemod: `npx @next/codemod@canary upgrade latest` — упоминание инструмента показывает практический опыт.",
+      "formats": [
+        "true_false",
+        "open_text",
+        "open_voice"
+      ],
+      "statements": [
+        {
+          "text": "С Next.js 15 params в page.tsx — это промис",
+          "isTrue": true
+        },
+        {
+          "text": "В Next.js 16 сборщик по умолчанию — Webpack",
+          "isTrue": false
+        },
+        {
+          "text": "В Next.js 16 middleware переименован в proxy",
+          "isTrue": true
+        },
+        {
+          "text": "В Next.js 16 команда next lint — основной способ запустить линтер",
+          "isTrue": false
+        }
+      ],
+      "sources": [
+        "https://nextjs.org/docs/app/guides/upgrading/version-16"
+      ]
+    }
+  ]
+}
