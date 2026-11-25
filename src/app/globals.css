@@ -1,33 +1,111 @@
 @import "tailwindcss";
 
+/*
+ * Стиль «Editorial greeting» (taste-skill, seed 1303368173), адаптирован под Skilling:
+ * белый фон, тональные панели вместо рамок, один акцент — глубокий бирюзовый —
+ * только на данных (пройденные уровни, прогресс). Главное действие — почти чёрное.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #1f2937;
-  --brand: #58cc02; /* «зелёный дуолинго» — правильный ответ, прогресс */
-  --brand-dark: #46a302;
-  --danger: #ff4b4b; /* ошибка */
-  --boss: #ce82ff; /* босс-этап */
+  --ground: #f3f3f0; /* не чисто белый: светлый камень */
+  --surface: #ebeae4; /* тональная панель на шаг темнее фона */
+  --raised: #ffffff;
+  --active: #e3e2db;
+  --border: #e7e7e3;
+  --rule: #efefec;
+  --control: #d4d4cf;
+  --text: #1f201d;
+  --muted: #595955; /* 6.4:1 на фоне, 5.8:1 на --surface */
+  --accent: #1b6e66; /* 5.9:1 на белом */
+  --accent-tint: #e1efec;
+  --primary: #1f201d;
+  --positive: #23692b;
+  --positive-tint: #e6f4e8;
+  --negative: #b42318;
+  --negative-tint: #fdecea;
+  --code-bg: #1f201d;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-brand: var(--brand);
-  --color-brand-dark: var(--brand-dark);
-  --color-danger: var(--danger);
-  --color-boss: var(--boss);
-  --font-sans: var(--font-nunito);
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-active: var(--active);
+  --color-line: var(--border);
+  --color-rule: var(--rule);
+  --color-control: var(--control);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-tint: var(--accent-tint);
+  --color-primary: var(--primary);
+  --color-positive: var(--positive);
+  --color-positive-tint: var(--positive-tint);
+  --color-negative: var(--negative);
+  --color-negative-tint: var(--negative-tint);
+  --color-code: var(--code-bg);
+  --font-sans: var(--font-onest);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #131f24;
-    --foreground: #e5e7eb;
-  }
+html {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--ground);
+  color: var(--text);
   font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Небо на главной: свет сверху, к низу растворяется в фоне страницы */
+.sky {
+  /* taste-skill-ignore: небо — осознанное решение владельца для главной */
+  background: linear-gradient(180deg, #b9d3e6 0%, #d3e3ee 38%, #e9efef 70%, var(--ground) 100%);
+}
+
+/* Облака плывут слева направо очень медленно: 3–5 минут на проход */
+@keyframes drift {
+  from {
+    transform: translate3d(-40vw, 0, 0);
+  }
+  to {
+    transform: translate3d(110vw, 0, 0);
+  }
+}
+.cloud {
+  position: absolute;
+  left: 0;
+  will-change: transform;
+  animation: drift linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cloud {
+    animation: none;
+  }
+}
+
+/* Горизонтальная лента тем без видимой полосы прокрутки */
+.rail-scroll {
+  scrollbar-width: none;
+}
+.rail-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Цифры всегда табличные: счётчики, проценты, прогресс */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { btnSmall } from "@/components/ui";
 import { signOut } from "@/app/login/actions";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -15,7 +16,7 @@ export async function UserMenu() {
     return (
       <Link
         href="/login"
-        className="rounded-xl border-2 border-black/15 px-3 py-1.5 text-sm font-bold dark:border-white/20"
+        className={btnSmall}
       >
         Войти
       </Link>
@@ -24,11 +25,11 @@ export async function UserMenu() {
 
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="max-w-[14rem] truncate font-semibold opacity-80">{user.email}</span>
+      <span className="max-w-[14rem] truncate text-muted">{user.email}</span>
       <form action={signOut}>
         <button
           type="submit"
-          className="rounded-xl border-2 border-black/15 px-3 py-1.5 font-bold dark:border-white/20"
+          className={btnSmall}
         >
           Выйти
         </button>

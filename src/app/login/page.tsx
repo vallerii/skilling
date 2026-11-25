@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Brand } from "@/components/ui";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
@@ -8,13 +8,21 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 py-12">
-      <Link href="/" className="text-sm font-bold uppercase tracking-wider text-brand">
-        Skilling
-      </Link>
-      <h1 className="mt-1 mb-2 text-3xl font-extrabold">Вход</h1>
-      <p className="mb-8 opacity-75">Чтобы сохранять прогресс и повторять ошибки.</p>
-      <LoginForm />
-    </main>
+    <>
+      <header className="border-b border-rule">
+        <div className="mx-auto flex h-14 w-full max-w-[1132px] items-center px-4">
+          <Brand />
+        </div>
+      </header>
+      <main className="flex flex-1 items-start justify-center px-4 pt-10 pb-16 md:items-center md:pt-0">
+        <div className="w-full max-w-[400px] md:rounded-[22px] md:bg-surface md:p-8">
+          <h1 className="text-2xl leading-8 font-medium">Вход</h1>
+          <p className="mt-2 mb-8 text-base text-muted">
+            Аккаунт сохраняет пройденные уровни, серию дней и вопросы, где были ошибки.
+          </p>
+          <LoginForm />
+        </div>
+      </main>
+    </>
   );
 }

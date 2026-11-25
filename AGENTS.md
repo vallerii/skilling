@@ -31,5 +31,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `npm run dev` — разработка
 - `npm run build` — сборка
 - `npm run lint`, `npm run typecheck`
+- `npm test` — unit-тесты (Vitest); логику проверки ответов менять вместе с `src/lib/game/session.test.ts`
 - `npm run questions:validate` — проверка банка вопросов
 - `npm run questions:seed` — загрузка банка вопросов в Supabase (после изменения вопросов)

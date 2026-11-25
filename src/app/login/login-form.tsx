@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { btnPrimary } from "@/components/ui";
 import { authenticate, type AuthState } from "./actions";
 
 export function LoginForm() {
@@ -16,7 +17,7 @@ export function LoginForm() {
       <input type="hidden" name="mode" value={mode} />
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm font-bold">
+        <label htmlFor="email" className="text-sm font-medium">
           Email
         </label>
         <input
@@ -28,12 +29,12 @@ export function LoginForm() {
           defaultValue={state?.email}
           aria-invalid={state?.error ? true : undefined}
           aria-describedby={state?.error ? "auth-error" : undefined}
-          className="rounded-xl border-2 border-black/15 bg-transparent px-4 py-3 outline-none focus-visible:border-brand dark:border-white/20"
+          className="min-h-12 rounded-xl border border-control bg-raised px-4 text-base outline-none focus-visible:border-ink focus-visible:shadow-[inset_0_0_0_1px_var(--text)]"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-bold">
+        <label htmlFor="password" className="text-sm font-medium">
           Пароль
         </label>
         <input
@@ -45,17 +46,17 @@ export function LoginForm() {
           minLength={8}
           aria-invalid={state?.error ? true : undefined}
           aria-describedby={state?.error ? "auth-error" : isSignup ? "password-hint" : undefined}
-          className="rounded-xl border-2 border-black/15 bg-transparent px-4 py-3 outline-none focus-visible:border-brand dark:border-white/20"
+          className="min-h-12 rounded-xl border border-control bg-raised px-4 text-base outline-none focus-visible:border-ink focus-visible:shadow-[inset_0_0_0_1px_var(--text)]"
         />
         {isSignup && (
-          <p id="password-hint" className="text-sm opacity-70">
+          <p id="password-hint" className="text-sm text-muted">
             Минимум 8 символов
           </p>
         )}
       </div>
 
       {state?.error && (
-        <p id="auth-error" role="alert" className="rounded-xl bg-danger/10 px-4 py-3 text-sm font-semibold text-danger">
+        <p id="auth-error" role="alert" className="rounded-xl bg-negative-tint px-4 py-3 text-sm text-[#7a1d14]">
           {state.error}
         </p>
       )}
@@ -63,7 +64,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-2xl border-b-4 border-brand-dark bg-brand px-4 py-3 font-extrabold uppercase tracking-wide text-white transition active:translate-y-0.5 active:border-b-2 disabled:opacity-60"
+        className={`${btnPrimary} mt-2 w-full`}
       >
         {isPending ? "Секунду…" : isSignup ? "Зарегистрироваться" : "Войти"}
       </button>
@@ -71,7 +72,7 @@ export function LoginForm() {
       <button
         type="button"
         onClick={() => setMode(isSignup ? "signin" : "signup")}
-        className="text-sm font-bold text-brand underline-offset-4 hover:underline"
+        className="min-h-11 text-sm text-ink underline underline-offset-4 hover:text-accent"
       >
         {isSignup ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться"}
       </button>

@@ -28,6 +28,7 @@ npm run dev
 | `npm run build` | продакшн-сборка |
 | `npm run lint` / `npm run typecheck` | проверки кода |
 | `npm run questions:validate` | проверка банка вопросов и статистика по темам |
+| `npm test` | unit-тесты (Vitest) |
 | `npm run questions:seed` | загрузка банка вопросов в Supabase (нужен `SUPABASE_SECRET_KEY`) |
 
 ## Вопросы
