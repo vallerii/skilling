@@ -17,7 +17,8 @@ npm run dev
 
 1. Создайте проект на [supabase.com](https://supabase.com) (бесплатный тариф).
 2. SQL Editor → выполните `supabase/migrations/20261124000000_init.sql`.
-3. Скопируйте `.env.example` в `.env.local` и заполните ключи из Project Settings → API.
+3. Скопируйте `.env.example` в `.env` и заполните ключи из Project Settings → API Keys.
+4. Загрузите банк вопросов в базу: добавьте `SUPABASE_SECRET_KEY` в `.env` и выполните `npm run questions:seed`.
 
 ## Команды
 
@@ -27,6 +28,7 @@ npm run dev
 | `npm run build` | продакшн-сборка |
 | `npm run lint` / `npm run typecheck` | проверки кода |
 | `npm run questions:validate` | проверка банка вопросов и статистика по темам |
+| `npm run questions:seed` | загрузка банка вопросов в Supabase (нужен `SUPABASE_SECRET_KEY`) |
 
 ## Вопросы
 

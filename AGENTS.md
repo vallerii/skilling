@@ -23,6 +23,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - LLM для проверки ответов не используем: открытые ответы проверяются чек-листом `keyPoints`.
 - Прогресс пользователя — только в Supabase, все таблицы под RLS. Новая таблица = новая миграция в `supabase/migrations/` + политики RLS.
 - `src/proxy.ts` — это бывший `middleware.ts` (переименован в Next.js 16).
+- Вход — email и пароль через Supabase Auth: `src/app/login/` (Server Actions), меню пользователя — `src/components/user-menu.tsx`. Компоненты, читающие сессию, оборачиваются в `<Suspense>` (включены Cache Components).
 - Закончили пункт плана — отметьте его в `PROJECT.md`.
 
 ## Команды
@@ -31,3 +32,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `npm run build` — сборка
 - `npm run lint`, `npm run typecheck`
 - `npm run questions:validate` — проверка банка вопросов
+- `npm run questions:seed` — загрузка банка вопросов в Supabase (после изменения вопросов)

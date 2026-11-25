@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { UserMenu } from "@/components/user-menu";
 import { loadQuestionBank } from "@/lib/questions/load";
 
 async function getBank() {
@@ -13,7 +15,12 @@ export default async function Home() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-12">
       <header className="mb-10">
-        <p className="text-sm font-bold uppercase tracking-wider text-brand">Skilling</p>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm font-bold uppercase tracking-wider text-brand">Skilling</p>
+          <Suspense fallback={null}>
+            <UserMenu />
+          </Suspense>
+        </div>
         <h1 className="mt-1 text-3xl font-extrabold">Техчеки к собеседованию</h1>
         <p className="mt-3 text-base opacity-80">
           Короткие ежедневные проверки вместо зубрёжки. Ошибки возвращаются в следующий этап, а

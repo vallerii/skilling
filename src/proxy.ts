@@ -4,7 +4,7 @@ import { isSupabaseConfigured, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/
 
 /**
  * Обновляет сессию Supabase на каждом запросе (Next.js 16: proxy вместо middleware).
- * Пока Supabase не настроен (.env.local пуст), просто пропускает запрос.
+ * Пока Supabase не настроен (.env пуст), просто пропускает запрос.
  */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
