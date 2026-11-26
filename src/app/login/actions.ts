@@ -47,13 +47,13 @@ export async function authenticate(_prev: AuthState, formData: FormData): Promis
 
   if (error) return { error: translateAuthError(error.message), email };
 
-  redirect("/");
+  redirect(`/?notice=${mode}`);
 }
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect("/login?notice=signout");
 }
 
 // ---------------------------------------------------------------------------
@@ -105,5 +105,5 @@ export async function setNewPassword(_prev: NewPasswordState, formData: FormData
     console.error("setNewPassword", error);
     return { error: "Не получилось сменить пароль, попробуйте ещё раз" };
   }
-  redirect("/?password=changed");
+  redirect("/?notice=password");
 }

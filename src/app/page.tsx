@@ -4,6 +4,7 @@ import { signOut } from "@/app/login/actions";
 import { Sky } from "@/components/sky";
 import { BossCard, TopicCards } from "@/components/topics-map";
 import { TopicsRail } from "@/components/topics-rail";
+import { SiteHeader } from "@/components/site-header";
 import { Brand, btnPrimary, IconArrow, plural, WordmarkInline } from "@/components/ui";
 import { emptyDashboard, getDashboard, levelsOf, type Dashboard } from "@/lib/dashboard";
 import { GAME } from "@/lib/game/config";
@@ -35,13 +36,13 @@ function HomeView({ bank, dash, pending = false }: { bank: TopicWithQuestions[];
 
   return (
     <>
-      {/* Небо — только первый экран главной; к низу растворяется в фоне */}
-      <div className="relative isolate">
+      {/* Хедер закреплён; небо начинается под ним, поэтому у первого блока отрицательный отступ */}
+      <SiteHeader>
+        <Brand />
+        {!pending && <Account dash={dash} />}
+      </SiteHeader>
+      <div className="relative isolate -mt-16 pt-16">
         <Sky />
-        <header className="mx-auto flex h-16 w-full max-w-[1132px] items-center justify-between gap-4 px-4">
-          <Brand />
-          {!pending && <Account dash={dash} />}
-        </header>
 
         <section aria-labelledby="greeting" className="mx-auto w-full max-w-[1132px] px-4 pt-6 pb-12 md:pt-16 md:pb-20">
           <h1
@@ -111,20 +112,20 @@ function HomeView({ bank, dash, pending = false }: { bank: TopicWithQuestions[];
 /** Подвал: короткий смысл продукта, ссылки, и вордмарк на всю ширину внизу. */
 function Footer({ bank, questionTotal, signedIn }: { bank: TopicWithQuestions[]; questionTotal: number; signedIn: boolean }) {
   return (
-    <footer className="mt-8 overflow-hidden bg-[#1f201d] text-[#e9e8e2]">
+    <footer className="mt-8 overflow-hidden bg-deep text-[#e3ece9]">
       <div className="mx-auto grid w-full max-w-[1132px] gap-10 px-4 pt-14 pb-10 md:grid-cols-12 md:gap-4 md:pt-20">
         <div className="md:col-span-6">
           <p className="max-w-[26ch] text-2xl leading-8 font-medium tracking-[-0.01em] text-white md:text-[32px] md:leading-10">
             Теория без зубрёжки — по одной ступени в день
           </p>
-          <p className="mt-4 max-w-[46ch] text-base leading-6 text-[#b4b3ac]">
+          <p className="mt-4 max-w-[46ch] text-base leading-6 text-[#b3cbc6]">
             {bank.length} тем и {questionTotal} вопросов, которые чаще всего спрашивают на собеседованиях фронтенд- и
             фулстек-разработчиков. Уровень засчитывается от {Math.round(GAME.levelPassRatio * 100)}% верных, ошибки
             возвращаются на повторение.
           </p>
         </div>
         <nav aria-label="Темы" className="md:col-span-3 md:col-start-8">
-          <h2 className="text-sm text-[#a3a29b]">Темы</h2>
+          <h2 className="text-sm text-[#9fbcb6]">Темы</h2>
           <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-base md:grid-cols-1">
             {bank.slice(0, 6).map((t) => (
               <li key={t.id}>
@@ -136,7 +137,7 @@ function Footer({ bank, questionTotal, signedIn }: { bank: TopicWithQuestions[];
           </ul>
         </nav>
         <div className="md:col-span-2">
-          <h2 className="text-sm text-[#a3a29b]">Аккаунт</h2>
+          <h2 className="text-sm text-[#9fbcb6]">Аккаунт</h2>
           <ul className="mt-3 flex flex-col gap-2 text-base">
             {!signedIn && (
               <li>
@@ -164,7 +165,7 @@ function Footer({ bank, questionTotal, signedIn }: { bank: TopicWithQuestions[];
           <WordmarkInline />
         </div>
       </div>
-      <div className="mx-auto flex w-full max-w-[1132px] justify-between gap-4 px-4 pt-4 pb-8 text-sm text-[#a3a29b]">
+      <div className="mx-auto flex w-full max-w-[1132px] justify-between gap-4 px-4 pt-4 pb-8 text-sm text-[#9fbcb6]">
         <span>skilling · 2026</span>
         <span>Подготовка к собеседованиям</span>
       </div>
@@ -223,7 +224,7 @@ function ReviewCall({ count }: { count: number }) {
   return (
     <section
       aria-labelledby="review-call"
-      className="mt-10 flex flex-col gap-4 rounded-[28px] bg-[#18252e] p-6 text-white md:mt-14 md:flex-row md:items-center md:justify-between md:px-10 md:py-7"
+      className="mt-10 flex flex-col gap-4 rounded-[28px] bg-deep p-6 text-white md:mt-14 md:flex-row md:items-center md:justify-between md:px-10 md:py-7"
     >
       <div>
         <h2 id="review-call" className="text-xl leading-7 font-medium md:text-2xl md:leading-8">
@@ -235,7 +236,7 @@ function ReviewCall({ count }: { count: number }) {
       </div>
       <Link
         href="/review"
-        className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 text-base font-medium text-[#18252e] transition-colors hover:bg-[#e7eef2]"
+        className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 text-base font-medium text-deep transition-colors hover:bg-[#dcefeb]"
       >
         Повторить
         <IconArrow width={18} height={18} />
@@ -292,7 +293,7 @@ function NextMove({ bank, dash }: { bank: TopicWithQuestions[]; dash: Dashboard 
               <li
                 key={level}
                 className={`tnum flex w-10 items-start justify-center rounded-xl pt-2 text-sm md:w-14 md:pt-3 md:text-base ${
-                  isPassed ? "bg-accent text-white" : isNext ? "bg-primary text-white" : "bg-surface text-muted"
+                  isPassed ? "bg-accent text-white" : isNext ? "bg-[#1f201d] text-white" : "bg-surface text-muted"
                 }`}
                 style={{ height: `${height}%` }}
               >

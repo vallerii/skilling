@@ -24,7 +24,7 @@ export function LevelTrack({ topic, progress, next }: { topic: TopicWithQuestion
         const look = state?.passed
           ? "bg-raised text-accent"
           : isNext
-            ? "bg-primary text-white hover:bg-[#3a3b37]"
+            ? "bg-[#1f201d] text-white hover:bg-[#3a3b37]"
             : "bg-raised/70 text-ink hover:bg-raised";
         return (
           <li key={level}>
@@ -57,7 +57,7 @@ function LevelList({ topic, progress, next }: { topic: TopicWithQuestions; progr
             <Link
               href={`/check/${topic.id}/${level}`}
               className={`flex min-h-12 items-center gap-3 rounded-2xl px-4 text-base transition-colors [@media(max-height:800px)]:min-h-11 ${
-                isNext ? "bg-primary text-white hover:bg-[#3a3b37]" : "bg-raised/60 text-ink hover:bg-raised"
+                isNext ? "bg-[#1f201d] text-white hover:bg-[#3a3b37]" : "bg-raised/60 text-ink hover:bg-raised"
               }`}
             >
               <span className="shrink-0 whitespace-nowrap">Уровень {level}</span>
@@ -156,9 +156,9 @@ export function BossCard({ passed, total, bossCount, ratio }: { passed: number; 
   return (
     <li
       data-card
-      className="flex w-[min(86vw,380px)] shrink-0 snap-start scroll-ml-4 flex-col rounded-[32px] bg-[#1f201d] p-6 text-[#e9e8e2] md:min-h-[min(560px,calc(100dvh-10vh-120px))] md:w-[clamp(380px,33vw,560px)] md:p-8"
+      className="flex w-[min(86vw,380px)] shrink-0 snap-start scroll-ml-4 flex-col rounded-[32px] bg-deep p-6 text-[#e3ece9] md:min-h-[min(560px,calc(100dvh-10vh-120px))] md:w-[clamp(380px,33vw,560px)] md:p-8"
     >
-      <div className="flex items-center justify-between text-sm text-[#a3a29b]">
+      <div className="flex items-center justify-between text-sm text-[#9fbcb6]">
         <span>Финал</span>
         <span className="flex items-center gap-1.5">
           {!open && <IconLock width={16} height={16} />}
@@ -168,7 +168,7 @@ export function BossCard({ passed, total, bossCount, ratio }: { passed: number; 
       <h3 className="mt-6 text-[28px] leading-9 font-medium tracking-[-0.015em] text-white md:mt-8 md:text-[34px] md:leading-[42px]">
         Босс-техчек
       </h3>
-      <p className="mt-3 text-base leading-6 text-[#c9c8c1] md:text-[17px] md:leading-7">
+      <p className="mt-3 text-base leading-6 text-[#c6d8d4] md:text-[17px] md:leading-7">
         {bossCount} случайных вопросов из всех тем подряд, как на настоящем собеседовании. Засчитывается от{" "}
         {Math.round(ratio * 100)}% верных.
       </p>
@@ -176,9 +176,9 @@ export function BossCard({ passed, total, bossCount, ratio }: { passed: number; 
       <div className="mt-auto pt-8">
         <p className="tnum text-[56px] leading-[60px] font-normal text-white md:text-[72px] md:leading-[76px]">
           {passed}
-          <span className="text-[#8e8d86]"> / {total}</span>
+          <span className="text-[#7fa39c]"> / {total}</span>
         </p>
-        <p className="mt-1 text-sm text-[#a3a29b]">уровней пройдено</p>
+        <p className="mt-1 text-sm text-[#9fbcb6]">уровней пройдено</p>
         <div className="mt-5 h-1 overflow-hidden rounded-full bg-white/12">
           <div className="h-full rounded-full bg-[#5fb3a8]" style={{ width: `${(passed / total) * 100}%` }} />
         </div>

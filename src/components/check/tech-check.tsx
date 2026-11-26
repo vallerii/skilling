@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveLevelRun, saveReviewRun, type SaveRunResult } from "@/app/check/actions";
 import { Markdown } from "@/components/markdown";
+import { SiteHeader } from "@/components/site-header";
 import { Brand, btnPrimary, btnSecondary, IconArrow, IconCheck, IconClose, plural } from "@/components/ui";
 import { GAME } from "@/lib/game/config";
 import {
@@ -319,11 +320,12 @@ function Result({
 
   return (
     <>
-      <header className="border-b border-rule">
-        <div className="mx-auto flex h-14 w-full max-w-[712px] items-center px-4">
-          <Brand />
-        </div>
-      </header>
+      <SiteHeader width="max-w-[744px]">
+        <Brand />
+        <Link href="/" className="inline-flex min-h-10 items-center rounded-full border border-control px-4 text-sm font-medium hover:bg-surface">
+          К темам
+        </Link>
+      </SiteHeader>
       <main className="mx-auto flex w-full max-w-[712px] flex-1 flex-col gap-8 px-4 pt-8 pb-16 md:pt-12">
         <section aria-labelledby="result-title">
           <p className="text-sm text-muted">

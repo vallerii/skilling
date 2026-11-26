@@ -17,7 +17,9 @@
   --muted: #595955; /* 6.4:1 на фоне, 5.8:1 на --surface */
   --accent: #1b6e66; /* 5.9:1 на белом */
   --accent-tint: #e1efec;
-  --primary: #1f201d;
+  --primary: #1b6e66; /* главная кнопка — цвет ступеней логотипа */
+  --primary-hover: #155a53;
+  --deep: #12322f; /* тёмные поверхности: подвал, босс, повторение — глубокая морская зелень */
   --positive: #23692b;
   --positive-tint: #e6f4e8;
   --negative: #b42318;
@@ -38,6 +40,8 @@
   --color-accent: var(--accent);
   --color-accent-tint: var(--accent-tint);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-deep: var(--deep);
   --color-positive: var(--positive);
   --color-positive-tint: var(--positive-tint);
   --color-negative: var(--negative);
@@ -90,6 +94,37 @@ body {
 }
 .rail-scroll::-webkit-scrollbar {
   display: none;
+}
+
+/* Всё, на что можно нажать, — с курсором-рукой (Tailwind 4 по умолчанию оставляет стрелку у кнопок) */
+button:not(:disabled),
+[role="button"],
+[role="switch"],
+summary,
+select,
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]),
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Всплывающее сообщение */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.toast {
+  animation: toast-in 220ms ease-out;
 }
 
 /* Цифры всегда табличные: счётчики, проценты, прогресс */

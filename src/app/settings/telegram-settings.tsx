@@ -53,7 +53,7 @@ export function TelegramSettings({ email, connected, username, enabled, timezone
     });
 
   return (
-    <section aria-labelledby="tg" className="mt-8 rounded-[28px] bg-surface p-6 md:p-8">
+    <section aria-labelledby="tg" className="mt-8 rounded-[28px] bg-raised p-6 md:p-8">
       <h2 id="tg" className="text-xl leading-7 font-medium">
         Напоминания в Telegram
       </h2>
@@ -114,7 +114,7 @@ export function TelegramSettings({ email, connected, username, enabled, timezone
             Подключено{username ? <span className="text-muted">· @{username}</span> : null}
           </p>
 
-          <label className="flex min-h-12 cursor-pointer items-center justify-between gap-4 rounded-2xl bg-raised px-4">
+          <label className="flex min-h-12 cursor-pointer items-center justify-between gap-4 rounded-2xl bg-surface px-4">
             <span className="text-base">Ежедневные напоминания</span>
             <input
               type="checkbox"

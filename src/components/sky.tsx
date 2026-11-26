@@ -31,10 +31,10 @@ function Cloud({ width }: { width: number }) {
   );
 }
 
-export function Sky() {
+export function Sky({ clouds = CLOUDS.length }: { clouds?: number }) {
   return (
     <div aria-hidden className="sky pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      {CLOUDS.map((c, i) => (
+      {CLOUDS.slice(0, clouds).map((c, i) => (
         <div
           key={i}
           className="cloud"

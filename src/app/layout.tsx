@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Onest } from "next/font/google";
+import { Suspense } from "react";
+import { Toast } from "@/components/toast";
 import "./globals.css";
 
 /** Onest — гротеск, нарисованный в первую очередь для кириллицы; табличные цифры есть. */
@@ -22,7 +24,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ru" className={`${onest.variable} h-full`}>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        <Suspense fallback={null}>
+          <Toast />
+        </Suspense>
+      </body>
     </html>
   );
 }

@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 
 /** Кнопки: плоские, полностью скруглённые. Главное действие — почти чёрное. */
 export const btnPrimary =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-medium text-white transition-colors hover:bg-[#3a3b37] active:bg-black disabled:cursor-not-allowed disabled:bg-active disabled:text-muted";
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-medium text-white transition-colors hover:bg-primary-hover active:bg-deep disabled:cursor-not-allowed disabled:bg-active disabled:text-muted";
 export const btnSecondary =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-control bg-raised px-6 text-base font-medium text-ink transition-colors hover:bg-surface";
 export const btnSmall =

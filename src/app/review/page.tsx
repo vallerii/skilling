@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { TechCheck } from "@/components/check/tech-check";
+import { SiteHeader } from "@/components/site-header";
 import { Brand, btnPrimary } from "@/components/ui";
 import { buildSession } from "@/lib/game/session";
 import { reviewQueue } from "@/lib/srs-data";
@@ -24,11 +25,12 @@ async function ReviewLoader() {
   if (!queue || queue.questions.length === 0) {
     return (
       <>
-        <header className="border-b border-rule">
-          <div className="mx-auto flex h-14 w-full max-w-[712px] items-center px-4">
-            <Brand />
-          </div>
-        </header>
+        <SiteHeader width="max-w-[744px]">
+          <Brand />
+          <Link href="/" className="inline-flex min-h-10 items-center rounded-full border border-control px-4 text-sm font-medium hover:bg-surface">
+            К темам
+          </Link>
+        </SiteHeader>
         <main className="mx-auto w-full max-w-[712px] flex-1 px-4 pt-10 pb-16">
           <h1 className="text-2xl leading-8 font-medium">{queue ? "На сегодня повторять нечего" : "Повторение"}</h1>
           <p className="mt-2 text-base text-muted">
