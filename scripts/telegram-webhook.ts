@@ -1,15 +1,17 @@
 /**
  * После деплоя: направить Telegram на вебхук сайта.
  *
- *   npm run bot:webhook   — NEXT_PUBLIC_SITE_URL должен быть публичным https-адресом
+ *   npm run bot:webhook -- https://skilling.vercel.app   — адрес сайта аргументом
+ *   npm run bot:webhook                                  — или из NEXT_PUBLIC_SITE_URL в .env
  */
 import "./load-env";
 import { callTelegram, siteUrl } from "../src/lib/telegram/api";
 import { checkEnv, setCommands } from "./telegram-common";
 
 async function main() {
-  checkEnv(["TELEGRAM_BOT_TOKEN", "TELEGRAM_WEBHOOK_SECRET", "NEXT_PUBLIC_SITE_URL"]);
-  const url = `${siteUrl()}/api/telegram/webhook`;
+  checkEnv(["TELEGRAM_BOT_TOKEN", "TELEGRAM_WEBHOOK_SECRET"]);
+  const site = (process.argv[2] ?? siteUrl()).replace(/\/$/, "");
+  const url = `${site}/api/telegram/webhook`;
   if (!url.startsWith("https://")) {
     console.error(`❌ Вебхук должен быть https, сейчас: ${url}. Локально используйте npm run bot:dev`);
     process.exit(1);

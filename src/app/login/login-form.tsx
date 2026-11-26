@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { btnPrimary } from "@/components/ui";
 import { authenticate, type AuthState } from "./actions";
@@ -34,9 +35,16 @@ export function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-medium">
-          Пароль
-        </label>
+        <div className="flex items-baseline justify-between gap-4">
+          <label htmlFor="password" className="text-sm font-medium">
+            Пароль
+          </label>
+          {!isSignup && (
+            <Link href="/forgot-password" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
+              Забыли пароль?
+            </Link>
+          )}
+        </div>
         <input
           id="password"
           name="password"
