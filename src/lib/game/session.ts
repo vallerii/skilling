@@ -50,6 +50,8 @@ export type SessionItem = {
   options?: string[];
   /** Для ordering — шаги в порядке показа (перемешаны, не совпадают с правильным). */
   shuffledOrder?: string[];
+  /** Ошибка с прошлого уровня, добавленная в конец техчека. На результат уровня не влияет. */
+  carried?: boolean;
 };
 
 export function prepareItem(question: Question, format: QuestionFormat, rng: () => number): SessionItem {
@@ -79,11 +81,27 @@ export function prepareItem(question: Question, format: QuestionFormat, rng: () 
   }
 }
 
+export type BuildOptions = {
+  mode?: SessionMode;
+  rng?: () => number;
+  /** Вопросы, на которые уже дважды подряд ответили верно, — их спрашиваем открытым ответом. */
+  recallIds?: ReadonlySet<string>;
+  /** Старые ошибки темы — добавляются в конец, помечены `carried`. */
+  carried?: Question[];
+};
+
 export function buildSession(
   questions: Question[],
-  { mode = "practice", rng = Math.random }: { mode?: SessionMode; rng?: () => number } = {},
+  { mode = "practice", rng = Math.random, recallIds, carried = [] }: BuildOptions = {},
 ): SessionItem[] {
-  return shuffle(questions, rng).map((q) => prepareItem(q, pickFormat(q, mode, rng), rng));
+  const modeFor = (q: Question): SessionMode => (recallIds?.has(q.id) ? "recall" : mode);
+  const own = new Set(questions.map((q) => q.id));
+  const main = shuffle(questions, rng).map((q) => prepareItem(q, pickFormat(q, modeFor(q), rng), rng));
+  const extra = shuffle(
+    carried.filter((q) => !own.has(q.id)),
+    rng,
+  ).map((q) => ({ ...prepareItem(q, pickFormat(q, modeFor(q), rng), rng), carried: true }));
+  return [...main, ...extra];
 }
 
 // ---------------------------------------------------------------------------

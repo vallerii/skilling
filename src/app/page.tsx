@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { signOut } from "@/app/login/actions";
 import { Sky } from "@/components/sky";
 import { BossCard, TopicCards } from "@/components/topics-map";
@@ -55,7 +55,9 @@ function HomeView({ bank, dash, pending = false }: { bank: TopicWithQuestions[];
               ? "Босс-техчек открыт: 10 вопросов из всех тем."
               : dash.user
                 ? dash.streakDays > 0
-                  ? `Так собеседование перестаёт пугать. Серия ${dash.streakDays} ${plural(dash.streakDays, ["день", "дня", "дней"])} — сегодняшний техчек её продлит.`
+                  ? dash.today.answers > 0
+                    ? `Так собеседование перестаёт пугать. Серия ${dash.streakDays} ${plural(dash.streakDays, ["день", "дня", "дней"])}, сегодня уже засчитан.`
+                    : `Так собеседование перестаёт пугать. Серия ${dash.streakDays} ${plural(dash.streakDays, ["день", "дня", "дней"])} — сегодняшний техчек её продлит.`
                   : "Так собеседование перестаёт пугать. Пройдите первый сегодня, чтобы начать серию."
                 : `Так собеседование перестаёт пугать. ${bank.length} тем и ${questionTotal} вопросов под фронтенд и фулстек.`}
           </p>
@@ -63,7 +65,9 @@ function HomeView({ bank, dash, pending = false }: { bank: TopicWithQuestions[];
           {/* Статистика — строкой цифр с тонкими разделителями, без карточек */}
           <dl className="mt-8 grid max-w-[720px] grid-cols-2 gap-y-5 md:mt-10 md:flex md:gap-0 md:divide-x md:divide-[#18252e]/15">
             <Figure label="уровней пройдено" value={dash.passedLevels} of={dash.totalLevels} />
-            <Figure label={`${plural(dash.streakDays, ["день", "дня", "дней"])} подряд`} value={dash.streakDays} />
+            <Figure label={`${plural(dash.streakDays, ["день", "дня", "дней"])} подряд`} value={dash.streakDays}>
+              <WeekStrip week={dash.week} />
+            </Figure>
             <Figure
               label={accuracy !== null ? `ответов сегодня, ${accuracy}% верно` : "ответов сегодня"}
               value={dash.today.answers}
@@ -71,6 +75,7 @@ function HomeView({ bank, dash, pending = false }: { bank: TopicWithQuestions[];
             <Figure label="XP сегодня" value={dash.today.xp} />
           </dl>
 
+          {dash.dueCount > 0 && <ReviewCall count={dash.dueCount} />}
           {dash.next ? <NextMove bank={bank} dash={dash} /> : null}
         </section>
       </div>
@@ -141,6 +146,11 @@ function Footer({ bank, questionTotal, signedIn }: { bank: TopicWithQuestions[];
               </li>
             )}
             <li>
+              <Link href="/settings" className="hover:text-white hover:underline hover:underline-offset-4">
+                Напоминания в Telegram
+              </Link>
+            </li>
+            <li>
               <Link href="/#topics" className="hover:text-white hover:underline hover:underline-offset-4">
                 Все {bank.length} тем
               </Link>
@@ -162,15 +172,75 @@ function Footer({ bank, questionTotal, signedIn }: { bank: TopicWithQuestions[];
   );
 }
 
-function Figure({ label, value, of }: { label: string; value: number; of?: number }) {
+function Figure({ label, value, of, children }: { label: string; value: number; of?: number; children?: ReactNode }) {
   return (
     <div className="flex flex-col gap-1 md:px-8 md:first:pl-0">
-      <dt className="order-2 text-sm leading-5 text-[#3c4a52]">{label}</dt>
+      <dt className="order-2 text-sm leading-5 text-[#3c4a52] md:whitespace-nowrap">{label}</dt>
       <dd className="tnum order-1 text-[32px] leading-9 text-[#18252e]">
         {value}
         {of !== undefined && <span className="text-xl text-[#3c4a52]"> / {of}</span>}
       </dd>
+      {children && <dd className="order-3 mt-1">{children}</dd>}
     </div>
+  );
+}
+
+const WEEKDAY = new Intl.DateTimeFormat("ru-RU", { weekday: "short", timeZone: "UTC" });
+
+/** Последние 7 дней: заполненная ступенька — день с техчеком, обведённая — сегодня. */
+function WeekStrip({ week }: { week: { day: string; active: boolean }[] }) {
+  if (week.length === 0) {
+    return (
+      <ol className="flex gap-1" aria-hidden>
+        {Array.from({ length: 7 }, (_, i) => (
+          <li key={i} className="h-2.5 w-4 rounded-[3px] bg-white/60" />
+        ))}
+      </ol>
+    );
+  }
+  const done = week.filter((d) => d.active).length;
+  return (
+    <ol className="flex gap-1" aria-label={`Активность за 7 дней: ${done} из 7`}>
+      {week.map((d, i) => {
+        const today = i === week.length - 1;
+        const label = WEEKDAY.format(new Date(`${d.day}T12:00:00Z`));
+        return (
+          <li
+            key={d.day}
+            title={`${label}${d.active ? " — был техчек" : ""}`}
+            className={`h-2.5 w-4 rounded-[3px] ${d.active ? "bg-accent" : "bg-white/60"} ${
+              today && !d.active ? "ring-1 ring-[#18252e]/40 ring-inset" : ""
+            }`}
+          />
+        );
+      })}
+    </ol>
+  );
+}
+
+/** Повторение по SM-2: ошибки и вопросы, у которых наступил срок. Стоит перед новым уровнем. */
+function ReviewCall({ count }: { count: number }) {
+  return (
+    <section
+      aria-labelledby="review-call"
+      className="mt-10 flex flex-col gap-4 rounded-[28px] bg-[#18252e] p-6 text-white md:mt-14 md:flex-row md:items-center md:justify-between md:px-10 md:py-7"
+    >
+      <div>
+        <h2 id="review-call" className="text-xl leading-7 font-medium md:text-2xl md:leading-8">
+          Пора повторить: <span className="tnum">{count}</span> {plural(count, ["вопрос", "вопроса", "вопросов"])}
+        </h2>
+        <p className="mt-1 text-base leading-6 text-white/75">
+          Ошибки и то, что вы отвечали несколько дней назад. Повторение держит знание в памяти.
+        </p>
+      </div>
+      <Link
+        href="/review"
+        className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 text-base font-medium text-[#18252e] transition-colors hover:bg-[#e7eef2]"
+      >
+        Повторить
+        <IconArrow width={18} height={18} />
+      </Link>
+    </section>
   );
 }
 
@@ -187,7 +257,7 @@ function NextMove({ bank, dash }: { bank: TopicWithQuestions[]; dash: Dashboard 
   return (
     <section
       aria-labelledby="next-move"
-      className="mt-10 grid gap-8 rounded-[32px] bg-raised p-6 md:mt-14 md:min-h-[300px] md:grid-cols-[1fr_auto] md:items-end md:gap-12 md:p-10"
+      className={`${dash.dueCount > 0 ? "mt-4 md:mt-5" : "mt-10 md:mt-14"} grid gap-8 rounded-[32px] bg-raised p-6 md:min-h-[300px] md:grid-cols-[1fr_auto] md:items-end md:gap-12 md:p-10`}
     >
       <div className="flex h-full flex-col">
         <h2 id="next-move" className="text-sm text-muted">
@@ -254,8 +324,11 @@ function Account({ dash }: { dash: Dashboard }) {
     );
   }
   return (
-    <div className="flex min-w-0 items-center gap-3">
-      <span className="hidden max-w-[16rem] truncate text-sm text-[#3c4a52] sm:block">{dash.user.email}</span>
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="hidden max-w-[16rem] truncate text-sm text-[#3c4a52] lg:block">{dash.user.email}</span>
+      <Link href="/settings" className={pill}>
+        Настройки
+      </Link>
       <form action={signOut}>
         <button type="submit" className={pill}>
           Выйти

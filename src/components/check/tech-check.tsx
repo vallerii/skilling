@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { saveLevelRun, type SaveRunResult } from "@/app/check/actions";
+import { saveLevelRun, saveReviewRun, type SaveRunResult } from "@/app/check/actions";
 import { Markdown } from "@/components/markdown";
-import { Brand, btnPrimary, btnSecondary, IconArrow, IconCheck, IconClose } from "@/components/ui";
+import { Brand, btnPrimary, btnSecondary, IconArrow, IconCheck, IconClose, plural } from "@/components/ui";
 import { GAME } from "@/lib/game/config";
 import {
   gradeAnswer,
@@ -24,12 +24,16 @@ import {
 } from "./question-inputs";
 
 type Props = {
+  /** `level` — техчек уровня темы, `review` — ежедневное повторение по SM-2. */
+  kind?: "level" | "review";
   topicId: string;
   topicTitle: string;
   level: number;
   hasNextLevel: boolean;
   mode: SessionMode;
   items: SessionItem[];
+  /** Для повторения: название темы каждого вопроса. */
+  topicOf?: { [questionId: string]: string };
 };
 
 type Phase = "answering" | "revealed" | "feedback";
@@ -50,7 +54,7 @@ function initialAnswer(item: SessionItem | undefined): Answer | null {
   return item?.format === "ordering" ? { kind: "ordering", order: item.shuffledOrder! } : null;
 }
 
-export function TechCheck({ topicId, topicTitle, level, hasNextLevel, mode, items }: Props) {
+export function TechCheck({ kind = "level", topicId, topicTitle, level, hasNextLevel, mode, items, topicOf }: Props) {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState<Answer | null>(() => initialAnswer(items[0]));
   const [phase, setPhase] = useState<Phase>("answering");
@@ -82,19 +86,19 @@ export function TechCheck({ topicId, topicTitle, level, hasNextLevel, mode, item
   const finish = useCallback(() => {
     setFinished(true);
     setSave("saving");
-    saveLevelRun({
-      topicId,
-      level,
-      attempts: records.map((r) => ({
-        questionId: r.item.question.id,
-        format: r.item.format,
-        correct: r.grade.correct,
-        score: r.grade.score,
-        answer: r.answer,
-        durationMs: r.durationMs,
-      })),
-    }).then(setSave, () => setSave({ saved: false, reason: "error" }));
-  }, [records, topicId, level]);
+    const attempts = records.map((r) => ({
+      questionId: r.item.question.id,
+      format: r.item.format,
+      correct: r.grade.correct,
+      score: r.grade.score,
+      answer: r.answer,
+      durationMs: r.durationMs,
+      carried: r.item.carried,
+    }));
+    (kind === "review" ? saveReviewRun({ attempts }) : saveLevelRun({ topicId, level, attempts })).then(setSave, () =>
+      setSave({ saved: false, reason: "error" }),
+    );
+  }, [records, topicId, level, kind]);
 
   const next = useCallback(() => {
     if (index + 1 >= items.length) {
@@ -122,6 +126,7 @@ export function TechCheck({ topicId, topicTitle, level, hasNextLevel, mode, item
   if (finished) {
     return (
       <Result
+        kind={kind}
         topicId={topicId}
         topicTitle={topicTitle}
         level={level}
@@ -159,7 +164,7 @@ export function TechCheck({ topicId, topicTitle, level, hasNextLevel, mode, item
           >
             <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${progress}%` }} />
           </div>
-          <span className="tnum w-12 shrink-0 pr-2 text-right text-sm text-muted">
+          <span className="tnum min-w-12 shrink-0 pr-2 text-right text-sm whitespace-nowrap text-muted">
             {index + 1} / {items.length}
           </span>
         </div>
@@ -167,7 +172,14 @@ export function TechCheck({ topicId, topicTitle, level, hasNextLevel, mode, item
 
       <main className="mx-auto w-full max-w-[712px] flex-1 px-4 pt-6 pb-10 md:pt-10">
         <p className="mb-2 text-sm text-muted">
-          {topicTitle} · уровень {level} · {FORMAT_LABEL[item.format]}
+          {item.carried ? (
+            <span className="text-negative">Ошибка с прошлого уровня</span>
+          ) : kind === "review" ? (
+            (topicOf?.[item.question.id] ?? "Повторение")
+          ) : (
+            `${topicTitle} · уровень ${level}`
+          )}{" "}
+          · {FORMAT_LABEL[item.format]}
         </p>
         <h1 className="mb-6 text-[22px] leading-[30px] font-medium md:text-2xl md:leading-8">{item.question.prompt}</h1>
 
@@ -278,6 +290,7 @@ function Feedback({ record }: { record: Record }) {
 }
 
 function Result({
+  kind,
   topicId,
   topicTitle,
   level,
@@ -286,6 +299,7 @@ function Result({
   records,
   save,
 }: {
+  kind: "level" | "review";
   topicId: string;
   topicTitle: string;
   level: number;
@@ -294,7 +308,11 @@ function Result({
   records: Record[];
   save: SaveRunResult | "saving" | null;
 }) {
-  const result = summarize(records.map((r) => r.grade));
+  const isReview = kind === "review";
+  // Результат уровня — только по его вопросам; перенесённые ошибки показываем отдельно
+  const result = summarize(records.filter((r) => !r.item.carried).map((r) => r.grade));
+  const carried = records.filter((r) => r.item.carried);
+  const fixed = carried.filter((r) => r.grade.correct).length;
   const percent = Math.round(result.ratio * 100);
   const mistakes = records.filter((r) => !r.grade.correct);
   const base = `/check/${topicId}/${level}`;
@@ -309,14 +327,16 @@ function Result({
       <main className="mx-auto flex w-full max-w-[712px] flex-1 flex-col gap-8 px-4 pt-8 pb-16 md:pt-12">
         <section aria-labelledby="result-title">
           <p className="text-sm text-muted">
-            {topicTitle} · уровень {level}
+            {isReview ? "Повторение" : `${topicTitle} · уровень ${level}`}
             {mode === "recall" ? " · открытые ответы" : ""}
           </p>
           <h1 id="result-title" className="mt-1 text-2xl leading-8 font-medium md:text-[28px] md:leading-9">
-            {result.passed ? "Уровень пройден" : "Пока не пройден"}
+            {isReview ? "Повторение закончено" : result.passed ? "Уровень пройден" : "Пока не пройден"}
           </h1>
           <p className="mt-2 text-base text-muted">
-            {result.passed
+            {isReview
+              ? "Вопросы, где были ошибки, вернутся завтра. Верные — через несколько дней."
+              : result.passed
               ? mistakes.length > 0
                 ? "Засчитано. Ниже — вопросы, где были ошибки."
                 : "Без единой ошибки."
@@ -329,24 +349,36 @@ function Result({
                 {percent}%
               </p>
               <p className="tnum text-sm text-muted">
-                {result.correct} из {result.total} верно · порог {Math.round(GAME.levelPassRatio * 100)}%
+                {result.correct} из {result.total} верно
+                {isReview ? "" : ` · порог ${Math.round(GAME.levelPassRatio * 100)}%`}
               </p>
             </div>
             {/* Полоса результата с отметкой порога прохождения */}
             <div className="relative mt-4 h-2 rounded-full bg-active">
               <div
-                className={`h-full rounded-full ${result.passed ? "bg-accent" : "bg-negative"}`}
+                className={`h-full rounded-full ${result.passed || isReview ? "bg-accent" : "bg-negative"}`}
                 style={{ width: `${percent}%` }}
               />
-              <span
-                aria-hidden
-                className="absolute -top-1 h-4 w-0.5 rounded bg-ink"
-                style={{ left: `${GAME.levelPassRatio * 100}%` }}
-              />
+              {!isReview && (
+                <span
+                  aria-hidden
+                  className="absolute -top-1 h-4 w-0.5 rounded bg-ink"
+                  style={{ left: `${GAME.levelPassRatio * 100}%` }}
+                />
+              )}
             </div>
             <p className="mt-4 text-sm" aria-live="polite">
               {save === "saving" && <span className="text-muted">Сохраняем прогресс…</span>}
-              {save !== null && save !== "saving" && save.saved && <span className="text-muted">Прогресс сохранён</span>}
+              {save !== null && save !== "saving" && save.saved && (
+                <span className="text-ink">
+                  {save.firstToday && save.streak === 1
+                    ? "Серия началась: 1 день. Завтра — второй."
+                    : save.firstToday
+                      ? `Серия продлена: ${save.streak} ${plural(save.streak, ["день", "дня", "дней"])} подряд.`
+                      : `Серия: ${save.streak} ${plural(save.streak, ["день", "дня", "дней"])} подряд.`}{" "}
+                  <span className="text-muted">+{save.xp} XP</span>
+                </span>
+              )}
               {save !== null && save !== "saving" && !save.saved && save.reason === "auth" && (
                 <span className="text-muted">
                   <Link href="/login" className="text-accent underline underline-offset-2">
@@ -360,10 +392,23 @@ function Result({
               )}
             </p>
           </div>
+          {carried.length > 0 && (
+            <p className="mt-4 text-base">
+              Ошибки с прошлых уровней: исправлено <span className="tnum">{fixed}</span> из{" "}
+              <span className="tnum">{carried.length}</span>.
+              <span className="text-muted">
+                {fixed < carried.length ? " Остальные вернутся на следующем уровне и в повторении." : " Они ушли в повторение."}
+              </span>
+            </p>
+          )}
         </section>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {result.passed && hasNextLevel ? (
+          {isReview ? (
+            <Link href="/" className={btnPrimary}>
+              На главную
+            </Link>
+          ) : result.passed && hasNextLevel ? (
             <Link href={`/check/${topicId}/${level + 1}`} className={btnPrimary}>
               Следующий уровень
               <IconArrow width={18} height={18} />
@@ -373,14 +418,16 @@ function Result({
               Пройти ещё раз
             </a>
           )}
-          {mode === "practice" && (
+          {!isReview && mode === "practice" && (
             <a href={`${base}?mode=recall`} className={btnSecondary}>
               Ответить своими словами
             </a>
           )}
-          <Link href="/" className={btnSecondary}>
-            К темам
-          </Link>
+          {!isReview && (
+            <Link href="/" className={btnSecondary}>
+              К темам
+            </Link>
+          )}
         </div>
 
         {mistakes.length > 0 && (

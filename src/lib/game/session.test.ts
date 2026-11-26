@@ -122,3 +122,29 @@ describe("buildSession и summarize", () => {
     expect(summarize([g(true), g(true), g(true), g(true), g(false), g(false), g(false)]).passed).toBe(false); // 4/7 ≈ 57%
   });
 });
+
+describe("buildSession: повторения и перенос ошибок", async () => {
+  const { buildSession: build, createRng: rng } = await import("./session");
+  const { loadTopicQuestions } = await import("@/lib/questions/load");
+  const all = await loadTopicQuestions("js-core");
+  const level2 = all.filter((q) => q.level === 2);
+  const errors = all.filter((q) => q.level === 1).slice(0, 2);
+
+  it("ошибки прошлого уровня идут в конце и помечены", () => {
+    const items = build(level2, { rng: rng(1), carried: errors });
+    expect(items).toHaveLength(level2.length + 2);
+    expect(items.slice(0, level2.length).every((i) => !i.carried)).toBe(true);
+    expect(items.slice(level2.length).every((i) => i.carried)).toBe(true);
+  });
+
+  it("вопрос уровня не дублируется, если он же среди ошибок", () => {
+    const items = build(level2, { rng: rng(2), carried: [level2[0]] });
+    expect(items).toHaveLength(level2.length);
+  });
+
+  it("знакомые вопросы спрашиваются открытым ответом", () => {
+    const recall = level2.find((q) => q.formats.includes("open_text"))!;
+    const items = build(level2, { rng: rng(3), recallIds: new Set([recall.id]) });
+    expect(items.find((i) => i.question.id === recall.id)!.format).toBe("open_text");
+  });
+});

@@ -10,7 +10,10 @@
     "questions:validate": "tsx scripts/validate-questions.ts",
     "typecheck": "tsc --noEmit",
     "questions:seed": "tsx scripts/seed-questions.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "bot:dev": "tsx scripts/telegram-dev.ts",
+    "bot:remind": "tsx scripts/telegram-remind.ts",
+    "bot:webhook": "tsx scripts/telegram-webhook.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

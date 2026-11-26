@@ -1,3 +1,7 @@
+import { GAME } from "@/lib/game/config";
+import { countStreak, dayIn } from "@/lib/game/streak";
+
+export { countStreak };
 import type { TopicWithQuestions } from "@/lib/questions/load";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -15,28 +19,15 @@ export type Dashboard = {
   totalLevels: number;
   today: { answers: number; correct: number; xp: number };
   streakDays: number;
+  /** Сколько вопросов ждут повторения прямо сейчас (не больше дневного лимита). */
+  dueCount: number;
+  /** Последние 7 дней, сегодня — последний: был ли хоть один ответ. */
+  week: { day: string; active: boolean }[];
   next: NextLevel | null;
 };
 
 export function levelsOf(topic: TopicWithQuestions): number[] {
   return [...new Set(topic.questions.map((q) => q.level))].sort((a, b) => a - b);
-}
-
-function dayIn(timeZone: string, date: Date) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
-}
-
-/** Дней подряд с хотя бы одним ответом: считаем от сегодня, а если сегодня ещё не занимались — от вчера. */
-export function countStreak(days: string[], today: string): number {
-  const set = new Set(days);
-  const cursor = new Date(`${today}T12:00:00Z`);
-  if (!set.has(today)) cursor.setUTCDate(cursor.getUTCDate() - 1);
-  let streak = 0;
-  while (set.has(cursor.toISOString().slice(0, 10))) {
-    streak++;
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
-  }
-  return streak;
 }
 
 /** Следующий уровень: первый непройденный по порядку тем и уровней. */
@@ -65,8 +56,23 @@ export function emptyDashboard(bank: TopicWithQuestions[]): Dashboard {
     totalLevels: bank.reduce((sum, t) => sum + levelsOf(t).length, 0),
     today: { answers: 0, correct: 0, xp: 0 },
     streakDays: 0,
+    dueCount: 0,
+    week: [], // без пользователя дат нет — полоса недели рисуется пустой
     next: findNext(bank, {}),
   };
+}
+
+/** Семь дней, заканчивая сегодняшним. */
+export function lastDays(today: string, active: Set<string>) {
+  const cursor = new Date(`${today}T12:00:00Z`);
+  const days: { day: string; active: boolean }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(cursor);
+    d.setUTCDate(cursor.getUTCDate() - i);
+    const day = d.toISOString().slice(0, 10);
+    days.push({ day, active: active.has(day) });
+  }
+  return days;
 }
 
 /** Данные главной. Читает сессию — вызывать внутри Suspense. */
@@ -79,7 +85,7 @@ export async function getDashboard(bank: TopicWithQuestions[]): Promise<Dashboar
   const user = auth.user;
   if (!user) return empty;
 
-  const [{ data: rows }, { data: profile }, { data: activity }] = await Promise.all([
+  const [{ data: rows }, { data: profile }, { data: activity }, { count: due }] = await Promise.all([
     supabase.from("level_progress").select("topic_id, level, status, best_score").eq("user_id", user.id),
     supabase.from("profiles").select("timezone").eq("id", user.id).maybeSingle(),
     supabase
@@ -87,7 +93,12 @@ export async function getDashboard(bank: TopicWithQuestions[]): Promise<Dashboar
       .select("day, answers, correct, xp")
       .eq("user_id", user.id)
       .order("day", { ascending: false })
-      .limit(120),
+      .limit(400),
+    supabase
+      .from("user_question_state")
+      .select("question_id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .lte("due_at", new Date().toISOString()),
   ]);
 
   const progress: ProgressMap = {};
@@ -114,6 +125,8 @@ export async function getDashboard(bank: TopicWithQuestions[]): Promise<Dashboar
     totalLevels: empty.totalLevels,
     today: { answers: todayRow?.answers ?? 0, correct: todayRow?.correct ?? 0, xp: todayRow?.xp ?? 0 },
     streakDays: countStreak((activity ?? []).map((a) => a.day as string), today),
+    dueCount: Math.min(due ?? 0, GAME.dailyReviewLimit),
+    week: lastDays(today, new Set((activity ?? []).filter((a) => a.answers > 0).map((a) => a.day as string))),
     next: findNext(bank, progress),
   };
 }

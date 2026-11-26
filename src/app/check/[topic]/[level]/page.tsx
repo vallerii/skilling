@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { TechCheck } from "@/components/check/tech-check";
 import { buildSession, type SessionMode } from "@/lib/game/session";
 import { loadTopicQuestions, loadTopics } from "@/lib/questions/load";
+import { levelExtras } from "@/lib/srs-data";
 
 type Params = Promise<{ topic: string; level: string }>;
 type SearchParams = Promise<{ mode?: string }>;
@@ -35,6 +36,8 @@ async function CheckLoader({ params, searchParams }: { params: Params; searchPar
   if (questions.length === 0) notFound();
 
   const maxLevel = Math.max(...all.map((q) => q.level));
+  // Старые ошибки темы — в конец уровня; знакомые вопросы — открытым ответом
+  const { carried, recallIds } = await levelExtras(topicId, level, questions);
 
   return (
     <TechCheck
@@ -43,7 +46,7 @@ async function CheckLoader({ params, searchParams }: { params: Params; searchPar
       level={level}
       hasNextLevel={level < maxLevel}
       mode={mode}
-      items={buildSession(questions, { mode })}
+      items={buildSession(questions, { mode, carried, recallIds })}
     />
   );
 }

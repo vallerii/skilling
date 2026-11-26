@@ -21,4 +21,11 @@ export const GAME = {
   masteredIntervalDays: 21,
   /** Максимум вопросов на повторение за один день. */
   dailyReviewLimit: 20,
+  /** Сколько старых ошибок темы добавляется в конец следующего уровня. */
+  carryOverLimit: 3,
+  /** Стартовый коэффициент лёгкости SM-2 и его нижняя граница. */
+  initialEase: 2.5,
+  minEase: 1.3,
+  /** Первые интервалы после правильных ответов подряд, дней (дальше — интервал × ease). */
+  firstIntervals: [1, 3] as readonly number[],
 } as const;
